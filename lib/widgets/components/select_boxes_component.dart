@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
 
 class SelectBoxesComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -18,16 +19,32 @@ class SelectBoxesComponent extends StatelessWidget {
   /// Callback triggered when any option is toggled.
   final ValueChanged<Map<String, bool>> onChanged;
 
-  const SelectBoxesComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const SelectBoxesComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   /// Whether the component is required (at least one must be selected).
   bool get _isRequired => component.required;
 
   /// List of available checkbox options.
-  List<Map<String, dynamic>> get _values => List<Map<String, dynamic>>.from(component.raw['values'] ?? []);
+  List<Map<String, dynamic>> get _values =>
+      List<Map<String, dynamic>>.from(component.raw['values'] ?? []);
+
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => component.raw['tooltip'];
 
   /// Returns validation error message if needed.
-  String? _validator() {
+  String? validator() {
     if (_isRequired) {
       final hasAnyChecked = value.values.any((v) => v == true);
       if (!hasAnyChecked) {
@@ -46,18 +63,39 @@ class SelectBoxesComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final error = _validator();
+    final hasValue = value.values.any((v) => v == true);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(component.label, style: Theme.of(context).textTheme.labelSmall),
+        FieldLabel(
+          label: component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: hasValue,
+          onClear: () {
+            final clearedState = Map<String, bool>.from(value);
+            clearedState.updateAll((key, value) => false);
+            onChanged(clearedState);
+          },
+          number: fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
         ..._values.map((option) {
           final key = option['value']?.toString() ?? '';
           final label = option['label']?.toString() ?? '';
           final checked = value[key] ?? false;
 
           return CheckboxListTile(
+            dense: true,
+            checkboxShape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(4),
+            ),
+            visualDensity: VisualDensity(
+              horizontal: -4,
+              vertical: -4,
+            ),
             value: checked,
             title: Text(label),
             onChanged: (val) {
@@ -69,11 +107,6 @@ class SelectBoxesComponent extends StatelessWidget {
             controlAffinity: ListTileControlAffinity.leading,
           );
         }),
-        if (error != null)
-          Padding(
-            padding: const EdgeInsets.only(left: 12, top: 4),
-            child: Text(error, style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
-          ),
       ],
     );
   }

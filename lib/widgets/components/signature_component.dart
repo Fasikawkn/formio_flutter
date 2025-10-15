@@ -5,12 +5,13 @@
 /// is captured as a base64-encoded PNG image string.
 
 import 'dart:convert';
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart';
+import 'package:signature/signature.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
+import '../shared/input_decoration_utils.dart';
 
 class SignatureComponent extends StatefulWidget {
   /// The Form.io component definition.
@@ -22,93 +23,121 @@ class SignatureComponent extends StatefulWidget {
   /// Callback triggered when the signature is drawn.
   final ValueChanged<String?> onChanged;
 
-  const SignatureComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const SignatureComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   @override
   State<SignatureComponent> createState() => _SignatureComponentState();
 }
 
 class _SignatureComponentState extends State<SignatureComponent> {
-  final _points = <Offset>[];
-  final _globalKey = GlobalKey();
+  late SignatureController _controller;
 
   bool get _isRequired => widget.component.required;
 
-  void _clear() {
-    setState(() {
-      _points.clear();
-    });
-    widget.onChanged(null);
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => widget.component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => widget.component.raw['tooltip'];
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = SignatureController(
+      penStrokeWidth: 2.0,
+      penColor: Colors.black,
+      exportBackgroundColor: Colors.white,
+    );
+
+    // Listen to signature changes
+    _controller.addListener(_onSignatureChanged);
   }
 
-  Future<void> _saveSignature() async {
-    final boundary = _globalKey.currentContext?.findRenderObject() as RenderRepaintBoundary?;
-    if (boundary != null) {
-      final image = await boundary.toImage(pixelRatio: 3.0);
-      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
-      final pngBytes = byteData?.buffer.asUint8List();
-      if (pngBytes != null) {
-        final base64Image = base64Encode(pngBytes);
+  @override
+  void dispose() {
+    _controller.removeListener(_onSignatureChanged);
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onSignatureChanged() async {
+    if (_controller.isNotEmpty) {
+      final signature = await _controller.toPngBytes();
+      if (signature != null) {
+        final base64Image = base64Encode(signature);
         widget.onChanged('data:image/png;base64,$base64Image');
       }
+    } else {
+      widget.onChanged(null);
     }
+  }
+
+  void _clear() {
+    _controller.clear();
+  }
+
+  String? validator() {
+    if (_isRequired && (widget.value == null || _controller.isEmpty)) {
+      return '${widget.component.label} is required.';
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasError = _isRequired && (widget.value == null || _points.isEmpty);
+    final hasContent = widget.value != null && _controller.isNotEmpty;
+    // final error = _validator();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelSmall),
-        const SizedBox(height: 8),
-        RepaintBoundary(
-          key: _globalKey,
+        FieldLabel(
+          label: widget.component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: hasContent,
+          onClear: _clear,
+          number: widget.fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
+        InputDecorator(
+          decoration: InputDecorationUtils.createDecoration(
+            context,
+          ),
           child: Container(
             height: 160,
-            decoration: BoxDecoration(border: Border.all(color: Colors.grey), color: Colors.white),
-            child: GestureDetector(
-              onPanUpdate: (details) {
-                setState(() {
-                  RenderBox box = context.findRenderObject() as RenderBox;
-                  _points.add(box.globalToLocal(details.globalPosition));
-                });
-              },
-              onPanEnd: (_) => _saveSignature(),
-              child: CustomPaint(painter: _SignaturePainter(_points)),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(7),
+              child: Signature(
+                controller: _controller,
+                backgroundColor: Colors.white,
+              ),
             ),
           ),
         ),
-        Row(mainAxisAlignment: MainAxisAlignment.end, children: [TextButton(onPressed: _clear, child: const Text('Clear'))]),
-        if (hasError)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text('${widget.component.label} is required.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
-          ),
+        // if (error != null)
+        //   Padding(
+        //     padding: const EdgeInsets.only(top: 6),
+        //     child: Text(
+        //       error,
+        //       style: TextStyle(
+        //         color: Theme.of(context).colorScheme.error,
+        //         fontSize: 12,
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }
-}
-
-class _SignaturePainter extends CustomPainter {
-  final List<Offset> points;
-  _SignaturePainter(this.points);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint =
-        Paint()
-          ..color = Colors.black
-          ..strokeWidth = 2.0
-          ..strokeCap = StrokeCap.round;
-    for (int i = 0; i < points.length - 1; i++) {
-      if (points[i] != Offset.zero && points[i + 1] != Offset.zero) {
-        canvas.drawLine(points[i], points[i + 1], paint);
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_SignaturePainter oldDelegate) => true;
 }

@@ -3,8 +3,12 @@
 /// Supports label, placeholder, required validation, default value, and configuration for date, time, or both.
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:omni_datetime_picker/omni_datetime_picker.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
+import '../shared/input_decoration_utils.dart';
 
 class DateTimeComponent extends StatefulWidget {
   /// The Form.io component definition.
@@ -16,7 +20,16 @@ class DateTimeComponent extends StatefulWidget {
   /// Callback triggered when the user selects a new date/time.
   final ValueChanged<DateTime?> onChanged;
 
-  const DateTimeComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const DateTimeComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   @override
   State<DateTimeComponent> createState() => _DateTimeComponentState();
@@ -32,25 +45,30 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
   String? get _placeholder => widget.component.raw['placeholder'];
 
   /// Determines if the picker should include time selection.
-  bool get _enableTime => widget.component.raw['enableTime'] ?? false;
+  bool get _enableTime => widget.component.raw['widget']['enableTime'] ?? false;
 
   /// Determines if the picker should include date selection.
   bool get _enableDate => widget.component.raw['enableDate'] ?? true;
 
-  /// The display format for the date/time.
-  // String get _format => widget.component.raw['format'] ?? 'yyyy-MM-dd';
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => widget.component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => widget.component.raw['tooltip'];
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.value != null ? _formatDateTime(widget.value!) : '');
+    _controller = TextEditingController(
+        text: widget.value != null ? _formatDateTime(widget.value!) : '');
   }
 
   @override
   void didUpdateWidget(covariant DateTimeComponent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.value != oldWidget.value) {
-      _controller.text = widget.value != null ? _formatDateTime(widget.value!) : '';
+      _controller.text =
+          widget.value != null ? _formatDateTime(widget.value!) : '';
     }
   }
 
@@ -62,21 +80,20 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
 
   /// Formats the DateTime object into a string based on the specified format.
   String _formatDateTime(DateTime dateTime) {
-    // You can use intl package for more advanced formatting.
-    return '${dateTime.toLocal()}'.split(' ')[0];
+    if (_enableTime && _enableDate) {
+      // Show both date and time: "2025-10-28 12:00 PM"
+      return DateFormat('yyyy-MM-dd hh:mm a').format(dateTime);
+    } else if (_enableTime) {
+      // Show only time: "12:00 PM"
+      return DateFormat('hh:mm a').format(dateTime);
+    } else {
+      // Show only date: "2025-10-28"
+      return DateFormat('yyyy-MM-dd').format(dateTime);
+    }
   }
 
-  /// Parses a string into a DateTime object.
-  // DateTime? _parseDateTime(String input) {
-  //   try {
-  //     return DateTime.parse(input);
-  //   } catch (_) {
-  //     return null;
-  //   }
-  // }
-
   /// Validates the input based on requirement.
-  String? _validator(String? input) {
+  String? validator(String? input) {
     if (_isRequired && (input == null || input.isEmpty)) {
       return '${widget.component.label} is required.';
     }
@@ -85,42 +102,87 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
 
   /// Handles the date/time picker dialog.
   Future<void> _handlePick(BuildContext context) async {
-    DateTime? selectedDate = widget.value ?? DateTime.now();
+    DateTime? selectedDateTime;
 
-    if (_enableDate) {
-      final date = await showDatePicker(context: context, initialDate: selectedDate, firstDate: DateTime(1900), lastDate: DateTime(2100));
-      if (date != null) {
-        selectedDate = DateTime(date.year, date.month, date.day, selectedDate.hour, selectedDate.minute);
-      } else {
-        return;
-      }
+    if (_enableDate && _enableTime) {
+      // Show both date and time picker
+      selectedDateTime = await showOmniDateTimePicker(
+        context: context,
+        initialDate: widget.value ?? DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime(2100),
+        is24HourMode: false,
+        isShowSeconds: false,
+        minutesInterval: 1,
+        borderRadius: BorderRadius.circular(16),
+      );
+    } else if (_enableDate) {
+      // Show only date picker
+      selectedDateTime = await showOmniDateTimePicker(
+        context: context,
+        initialDate: widget.value ?? DateTime.now(),
+        firstDate: DateTime(1900),
+        lastDate: DateTime(2100),
+        type: OmniDateTimePickerType.date,
+        borderRadius: BorderRadius.circular(16),
+      );
+    } else if (_enableTime) {
+      // Show only time picker
+      selectedDateTime = await showOmniDateTimePicker(
+        context: context,
+        initialDate: widget.value ?? DateTime.now(),
+        type: OmniDateTimePickerType.time,
+        is24HourMode: false,
+        isShowSeconds: false,
+        minutesInterval: 1,
+        borderRadius: BorderRadius.circular(16),
+      );
     }
 
-    if (_enableTime) {
-      final time = await showTimePicker(context: context, initialTime: TimeOfDay.fromDateTime(selectedDate));
-      if (time != null) {
-        selectedDate = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, time.hour, time.minute);
-      } else {
-        return;
-      }
+    if (selectedDateTime != null) {
+      widget.onChanged(selectedDateTime);
     }
-
-    widget.onChanged(selectedDate);
   }
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: _controller,
-      readOnly: true,
-      decoration: InputDecoration(
-        labelText: widget.component.label,
-        hintText: _placeholder,
-        border: const OutlineInputBorder(),
-        suffixIcon: const Icon(Icons.calendar_today),
-      ),
-      validator: _validator,
-      onTap: () => _handlePick(context),
+    final hasContent = widget.value != null;
+    // final errorText = _validator(_controller.text);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FieldLabel(
+          label: widget.component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: hasContent,
+          onClear: () {
+            _controller.clear();
+            widget.onChanged(null);
+          },
+          number: widget.fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
+        TextFormField(
+          controller: _controller,
+          readOnly: true,
+          decoration: InputDecorationUtils.createDecoration(
+            context,
+            hintText: _placeholder ?? 'Select date/time...',
+            suffixIcon: Icon(
+              _enableTime && _enableDate
+                  ? Icons.calendar_today
+                  : _enableTime
+                      ? Icons.access_time
+                      : Icons.calendar_today,
+            ),
+          ),
+          onTap: () => _handlePick(context),
+        ),
+      ],
     );
   }
 }

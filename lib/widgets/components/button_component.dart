@@ -52,11 +52,14 @@ class ButtonComponent extends StatelessWidget {
       _ => Theme.of(context).colorScheme.primary,
     };
 
-    return ElevatedButton.styleFrom(backgroundColor: color, foregroundColor: Colors.white, textStyle: const TextStyle(fontWeight: FontWeight.bold));
+    return ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, textStyle: const TextStyle(fontWeight: FontWeight.bold));
   }
 
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(style: _style(context), onPressed: isDisabled ? null : onPressed, child: Text(_label));
+    return SizedBox(
+      width: double.infinity,
+
+      child: ElevatedButton(style: _style(context), onPressed: isDisabled ? null : onPressed, child: Text(_label)));
   }
 }

@@ -19,7 +19,12 @@ class EditGridComponent extends StatefulWidget {
   /// Callback triggered when the edit grid changes.
   final ValueChanged<List<Map<String, dynamic>>> onChanged;
 
-  const EditGridComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  const EditGridComponent(
+      {Key? key,
+      required this.component,
+      required this.value,
+      required this.onChanged})
+      : super(key: key);
 
   @override
   State<EditGridComponent> createState() => _EditGridComponentState();
@@ -73,7 +78,8 @@ class _EditGridComponentState extends State<EditGridComponent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelLarge),
+        Text(widget.component.label,
+            style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         ..._rows.asMap().entries.map((entry) {
           final index = entry.key;
@@ -86,9 +92,12 @@ class _EditGridComponentState extends State<EditGridComponent> {
                 children: [
                   Row(
                     children: [
-                      Text('Entry ${index + 1}', style: Theme.of(context).textTheme.labelSmall),
+                      Text('Entry ${index + 1}',
+                          style: Theme.of(context).textTheme.bodyMedium),
                       const Spacer(),
-                      IconButton(onPressed: () => _removeRow(index), icon: const Icon(Icons.delete_outline)),
+                      IconButton(
+                          onPressed: () => _removeRow(index),
+                          icon: const Icon(Icons.delete_outline)),
                     ],
                   ),
                   ..._childComponents.map(
@@ -97,7 +106,8 @@ class _EditGridComponentState extends State<EditGridComponent> {
                       child: ComponentFactory.build(
                         component: component,
                         value: row[component.key],
-                        onChanged: (val) => _updateField(index, component.key, val),
+                        onChanged: (val) =>
+                            _updateField(index, component.key, val),
                       ),
                     ),
                   ),
@@ -106,11 +116,16 @@ class _EditGridComponentState extends State<EditGridComponent> {
             ),
           );
         }),
-        TextButton.icon(onPressed: _addRow, icon: const Icon(Icons.add), label: const Text('Add Entry')),
+        TextButton.icon(
+            onPressed: _addRow,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Entry')),
         if (hasError)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text('${widget.component.label} is required.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+            child: Text('${widget.component.label} is required.',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.error, fontSize: 12)),
           ),
       ],
     );

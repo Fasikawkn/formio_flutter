@@ -12,8 +12,6 @@ import 'package:flutter/material.dart';
 import '../core/exceptions.dart';
 import '../models/component.dart';
 import '../models/form.dart';
-import '../network/api_client.dart';
-import '../services/submission_service.dart';
 import 'component_factory.dart';
 
 typedef OnFormChanged = void Function(Map<String, dynamic> data);
@@ -26,6 +24,7 @@ class FormRenderer extends StatefulWidget {
   final OnFormSubmitted? onSubmit;
   final OnFormSubmitFailed? onError;
   final Map<String, dynamic>? initialData;
+  final bool isSubmitting;
 
   const FormRenderer({
     Key? key,
@@ -34,6 +33,7 @@ class FormRenderer extends StatefulWidget {
     this.onSubmit,
     this.onError,
     this.initialData,
+    this.isSubmitting = false,
   }) : super(key: key);
 
   @override
@@ -43,13 +43,24 @@ class FormRenderer extends StatefulWidget {
 class _FormRendererState extends State<FormRenderer> {
   late Map<String, dynamic> _formData;
   final Map<String, String?> _errors = {};
-  final _submissionService = SubmissionService(ApiClient());
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-    _formData = widget.initialData != null ? Map<String, dynamic>.from(widget.initialData!) : {};
+    _formData = widget.initialData != null
+        ? Map<String, dynamic>.from(widget.initialData!)
+        : {};
+  }
+
+  @override
+  void didUpdateWidget(covariant FormRenderer oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if(oldWidget.isSubmitting != widget.isSubmitting) {
+      setState(() {
+        _isSubmitting = widget.isSubmitting;
+      });
+    }
   }
 
   void _updateField(String key, dynamic value) {
@@ -66,7 +77,10 @@ class _FormRendererState extends State<FormRenderer> {
     for (final component in widget.form.components) {
       if (_shouldShowComponent(component) && component.required) {
         final value = _formData[component.key];
-        final isEmpty = value == null || (value is String && value.trim().isEmpty) || (value is Map && value.isEmpty) || (value is List && value.isEmpty);
+        final isEmpty = value == null ||
+            (value is String && value.trim().isEmpty) ||
+            (value is Map && value.isEmpty) ||
+            (value is List && value.isEmpty);
 
         if (isEmpty) {
           _errors[component.key] = '${component.label} is required.';
@@ -86,17 +100,10 @@ class _FormRendererState extends State<FormRenderer> {
     setState(() => _isSubmitting = true);
 
     try {
-      await _submissionService.submit(widget.form.path, _formData);
       widget.onSubmit?.call(_formData);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Form submitted successfully!')),
-      );
     } catch (e) {
       final error = e is ApiException ? e.message : 'Unknown error';
       widget.onError?.call(error);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Submission failed: $error')),
-      );
     } finally {
       setState(() => _isSubmitting = false);
     }
@@ -122,15 +129,58 @@ class _FormRendererState extends State<FormRenderer> {
     return shouldShow;
   }
 
-  Widget _buildComponent(ComponentModel component) {
+  Widget _buildComponent(ComponentModel component, {int? fieldNumber}) {
     if (!_shouldShowComponent(component)) {
       return const SizedBox.shrink();
     }
 
-    if (component.type == 'button' && (component.raw['action'] == 'submit' || component.raw['action'] == null)) {
-      return ElevatedButton(
-        onPressed: _isSubmitting ? null : _handleSubmit,
-        child: _isSubmitting ? const CircularProgressIndicator() : Text(component.label.isNotEmpty ? component.label : 'Submit'),
+    // Handle button component separately to avoid rebuilding it through ComponentFactory
+    if (component.type == 'button' &&
+        (component.raw['action'] == 'submit' ||
+            component.raw['action'] == null)) {
+      return SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white,
+            minimumSize: const Size.fromHeight(52),
+            elevation: 0,
+            shadowColor: Colors.transparent,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          ).copyWith(
+            backgroundColor: WidgetStateProperty.resolveWith<Color>(
+              (Set<WidgetState> states) {
+                if (states.contains(WidgetState.pressed)) {
+                  return Theme.of(context).primaryColor.withValues(alpha: 0.8);
+                }
+                if (states.contains(WidgetState.disabled)) {
+                  return Theme.of(context).disabledColor;
+                }
+                return Theme.of(context).primaryColor;
+              },
+            ),
+          ),
+          onPressed: _isSubmitting ? null : _handleSubmit,
+          child: _isSubmitting
+              ? SizedBox(
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                )
+              : Text(
+                  component.label.isNotEmpty ? component.label : 'Submit',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+        ),
       );
     }
 
@@ -138,11 +188,13 @@ class _FormRendererState extends State<FormRenderer> {
       component: component,
       value: _formData[component.key],
       onChanged: (value) => _updateField(component.key, value),
+      fieldNumber: fieldNumber,
     );
 
     final errorText = _errors[component.key];
 
     return Column(
+      key: ValueKey('${component.key}_${component.type}'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         fieldWidget,
@@ -163,15 +215,32 @@ class _FormRendererState extends State<FormRenderer> {
 
   @override
   Widget build(BuildContext context) {
+
+    // Calculate field numbers for non-button, visible components
+    int fieldNumber = 0;
+    final componentNumbers = <String, int>{};
+    for (final component in widget.form.components) {
+      if (_shouldShowComponent(component) && component.type != 'button') {
+        fieldNumber++;
+        componentNumbers[component.key] = fieldNumber;
+      }
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (widget.form.title.isNotEmpty) Text(widget.form.title, style: Theme.of(context).textTheme.headlineSmall),
-        const SizedBox(height: 12),
         ...widget.form.components.map((component) {
+          // Skip hidden components
+          if (!_shouldShowComponent(component)) {
+            return const SizedBox.shrink();
+          }
+
+          final fieldNum = componentNumbers[component.key];
+
           return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: _buildComponent(component),
+            key: ValueKey('component_${component.key}_${component.type}'),
+            padding: const EdgeInsets.only(bottom: 20),
+            child: _buildComponent(component, fieldNumber: fieldNum),
           );
         }).toList(),
       ],

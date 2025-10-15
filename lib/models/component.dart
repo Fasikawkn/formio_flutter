@@ -34,13 +34,19 @@ class ComponentModel {
   factory ComponentModel.fromJson(Map<String, dynamic> json) {
     final validate = json['validate'] as Map<String, dynamic>?;
 
+    // Create a copy of json to avoid mutating the original
+    final rawCopy = Map<String, dynamic>.from(json);
+    rawCopy.removeWhere(
+        (k, v) => ['type', 'key', 'label', 'defaultValue'].contains(k));
+
     return ComponentModel(
       type: json['type']?.toString() ?? 'unknown',
       key: json['key']?.toString() ?? '',
       label: json['label']?.toString() ?? '',
-      required: validate?['required'] == true || validate?['required'] == 'true',
+      required:
+          validate?['required'] == true || validate?['required'] == 'true',
       defaultValue: json['defaultValue'],
-      raw: json..removeWhere((k,v)=>['type','key','label','defaultValue'].contains(k)),
+      raw: rawCopy,
     );
   }
 

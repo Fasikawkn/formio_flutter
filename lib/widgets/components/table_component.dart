@@ -19,7 +19,12 @@ class TableComponent extends StatelessWidget {
   /// Callback triggered when any child component's value changes.
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const TableComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  const TableComponent(
+      {Key? key,
+      required this.component,
+      required this.value,
+      required this.onChanged})
+      : super(key: key);
 
   /// Returns a list of rows, where each row is a list of components.
   // List<List<ComponentModel>> get _rows {
@@ -54,30 +59,35 @@ class TableComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final tableRows = component.raw['rows'] as List? ?? [];
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (component.label.isNotEmpty) Text(component.label, style: Theme.of(context).textTheme.labelLarge),
-        const SizedBox(height: 8),
-        Table(
-          border: TableBorder.all(color: Colors.grey.shade300),
-          defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-          children:
-              tableRows.map<TableRow>((row) {
-                final rowCells = row as List<dynamic>;
-                return TableRow(
-                  children:
-                      rowCells.map((cell) {
-                        final components = cell['components'] as List? ?? [];
-                        if (components.isEmpty) {
-                          return const SizedBox(height: 48); // empty cell
-                        }
-                        return Column(children: components.map<ComponentModel>((json) => ComponentModel.fromJson(json)).map(_buildCell).toList());
-                      }).toList(),
-                );
-              }).toList(),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: MediaQuery.of(context).size.width * 1.3,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Table(
+            border: TableBorder.all(color: Colors.grey.shade300),
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            children: tableRows.map<TableRow>((row) {
+              final rowCells = row as List<dynamic>;
+              return TableRow(
+                children: rowCells.map((cell) {
+                  final components = cell['components'] as List? ?? [];
+                  if (components.isEmpty) {
+                    return const SizedBox(height: 48); // empty cell
+                  }
+                  return Column(
+                      children: components
+                          .map<ComponentModel>(
+                              (json) => ComponentModel.fromJson(json))
+                          .map(_buildCell)
+                          .toList());
+                }).toList(),
+              );
+            }).toList(),
+          ),
         ),
-      ],
+      ),
     );
   }
 }

@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
 
 class CheckboxComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -16,24 +17,73 @@ class CheckboxComponent extends StatelessWidget {
   /// Callback called when the user toggles the checkbox.
   final ValueChanged<bool> onChanged;
 
-  const CheckboxComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const CheckboxComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   /// Determines whether the checkbox is required.
   bool get _isRequired => component.required;
 
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => component.raw['tooltip'];
+
+  /// Returns validation error message if needed.
+  String? validator() {
+    if (_isRequired && !value) {
+      return '${component.label} is required.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return CheckboxListTile(
-      title: Text(component.label),
-      value: value,
-      onChanged: (val) {
-        if (val != null) {
-          onChanged(val);
-        }
-      },
-      controlAffinity: ListTileControlAffinity.leading,
-      contentPadding: EdgeInsets.zero,
-      subtitle: _isRequired && !value ? Text('${component.label} is required.', style: TextStyle(color: Theme.of(context).colorScheme.error)) : null,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          children: [
+            Checkbox(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(4),
+              ),
+              value: value,
+              onChanged: (val) {
+                if (val != null) {
+                  onChanged(val);
+                }
+              },
+              visualDensity: VisualDensity(
+                horizontal: -4,
+                vertical: -4,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: FieldLabel(
+                label: component.label,
+                isRequired: _isRequired,
+                showClearButton: true,
+                hasContent: value,
+                onClear: () => onChanged(false),
+                number: fieldNumber,
+                description: _description,
+                tooltip: _tooltip,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

@@ -2,11 +2,14 @@
 /// a Form.io "phoneNumber" component.
 ///
 /// Supports label, placeholder, required validation, default value,
-/// and numeric keyboard input.
+/// and automatic phone number formatting.
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
+import '../shared/input_decoration_utils.dart';
 
 class PhoneNumberComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -18,13 +21,28 @@ class PhoneNumberComponent extends StatelessWidget {
   /// Callback triggered when the phone number is updated.
   final ValueChanged<String> onChanged;
 
-  const PhoneNumberComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const PhoneNumberComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   /// Whether the field is marked as required.
   bool get _isRequired => component.required;
 
   /// Optional placeholder for the input field.
   String? get _placeholder => component.raw['placeholder'];
+
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => component.raw['tooltip'];
 
   /// Regular expression for basic phone number format validation.
   static final _phoneRegex = RegExp(r'^[\d\-\+\s\(\)]+$');
@@ -46,12 +64,34 @@ class PhoneNumberComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      initialValue: value ?? component.defaultValue?.toString(),
-      decoration: InputDecoration(labelText: component.label, hintText: _placeholder ?? '+1 (555) 123-4567', border: const OutlineInputBorder()),
-      keyboardType: TextInputType.phone,
-      onChanged: onChanged,
-      validator: _validator,
+    final currentValue = value ?? component.defaultValue?.toString() ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FieldLabel(
+          label: component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: currentValue.isNotEmpty,
+          onClear: () => onChanged(''),
+          number: fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
+        TextFormField(
+          initialValue: currentValue,
+          decoration: InputDecorationUtils.createDecoration(
+            context,
+            hintText: _placeholder ?? '+1 (555) 123-4567',
+            suffixIcon: const Icon(Icons.phone),
+          ),
+          keyboardType: TextInputType.phone,
+          onChanged: onChanged,
+          validator: _validator,
+        ),
+      ],
     );
   }
 }

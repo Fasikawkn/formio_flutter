@@ -20,7 +20,12 @@ class DataGridComponent extends StatefulWidget {
   /// Callback triggered when the grid content changes.
   final ValueChanged<List<Map<String, dynamic>>> onChanged;
 
-  const DataGridComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  const DataGridComponent(
+      {Key? key,
+      required this.component,
+      required this.value,
+      required this.onChanged})
+      : super(key: key);
 
   @override
   State<DataGridComponent> createState() => _DataGridComponentState();
@@ -75,7 +80,8 @@ class _DataGridComponentState extends State<DataGridComponent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelSmall),
+        Text(widget.component.label,
+            style: Theme.of(context).textTheme.bodyMedium),
         const SizedBox(height: 8),
         ListView.builder(
           shrinkWrap: true,
@@ -92,12 +98,19 @@ class _DataGridComponentState extends State<DataGridComponent> {
                     ..._columns.map(
                       (col) => Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
-                        child: ComponentFactory.build(component: col, value: row[col.key], onChanged: (val) => _updateCell(index, col.key, val)),
+                        child: ComponentFactory.build(
+                            component: col,
+                            value: row[col.key],
+                            onChanged: (val) =>
+                                _updateCell(index, col.key, val)),
                       ),
                     ),
                     Align(
                       alignment: Alignment.centerRight,
-                      child: TextButton.icon(onPressed: () => _removeRow(index), icon: const Icon(Icons.delete_outline), label: const Text('Remove Row')),
+                      child: TextButton.icon(
+                          onPressed: () => _removeRow(index),
+                          icon: const Icon(Icons.delete_outline),
+                          label: const Text('Remove Row')),
                     ),
                   ],
                 ),
@@ -105,11 +118,16 @@ class _DataGridComponentState extends State<DataGridComponent> {
             );
           },
         ),
-        TextButton.icon(onPressed: _addRow, icon: const Icon(Icons.add), label: const Text('Add Row')),
+        TextButton.icon(
+            onPressed: _addRow,
+            icon: const Icon(Icons.add),
+            label: const Text('Add Row')),
         if (hasError)
           Padding(
             padding: const EdgeInsets.only(top: 6),
-            child: Text('${widget.component.label} is required.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+            child: Text('${widget.component.label} is required.',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.error, fontSize: 12)),
           ),
       ],
     );

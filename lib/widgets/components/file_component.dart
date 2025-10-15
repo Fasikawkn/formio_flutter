@@ -10,6 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
 
 class FileComponent extends StatelessWidget {
   /// The Form.io file component definition.
@@ -21,7 +22,16 @@ class FileComponent extends StatelessWidget {
   /// Callback triggered when files are selected or cleared.
   final ValueChanged<List<String>> onChanged;
 
-  const FileComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const FileComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   /// Whether multiple file selection is allowed.
   bool get _isMultiple => component.raw['multiple'] == true;
@@ -35,11 +45,27 @@ class FileComponent extends StatelessWidget {
     return accept.map((e) => e['value'].toString()).toList();
   }
 
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => component.raw['tooltip'];
+
+  /// Retrieves the placeholder text if available in the raw JSON.
+  String? get _placeholder => component.raw['placeholder'] == null ||
+          component.raw['placeholder'].toString().isEmpty
+      ? null
+      : component.raw['placeholder'].toString();
+
   Future<void> _pickFiles(BuildContext context) async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: _isMultiple,
       type: FileType.custom,
-      allowedExtensions: _acceptedExtensions.isNotEmpty ? _acceptedExtensions.map((e) => e.replaceAll(RegExp(r'[^\w]'), '')).toList() : null,
+      allowedExtensions: _acceptedExtensions.isNotEmpty
+          ? _acceptedExtensions
+              .map((e) => e.replaceAll(RegExp(r'[^\w]'), ''))
+              .toList()
+          : null,
     );
 
     if (result != null) {
@@ -53,35 +79,108 @@ class FileComponent extends StatelessWidget {
     onChanged(updated);
   }
 
+  void _clearAll() {
+    onChanged([]);
+  }
+
+  String? validator() {
+    if (_isRequired && value.isEmpty) {
+      return '${component.label} is required.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasError = _isRequired && value.isEmpty;
+    // final error = validator();
+    final theme = Theme.of(context);
+    final borderColor = Colors.grey.withValues(alpha: 0.3);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(component.label, style: Theme.of(context).textTheme.labelLarge),
-        const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children:
-              value.map((filePath) {
-                final fileName = filePath.split(Platform.pathSeparator).last;
-                return Chip(label: Text(fileName), onDeleted: () => _removeFile(filePath));
-              }).toList(),
+        FieldLabel(
+          label: component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: value.isNotEmpty,
+          onClear: _clearAll,
+          number: fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
         ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: () => _pickFiles(context),
-          icon: const Icon(Icons.upload_file),
-          label: Text(_isMultiple ? 'Upload Files' : 'Upload File'),
-        ),
-        if (hasError)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text('${component.label} is required.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: borderColor,
+              width: 1,
+            ),
           ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (value.isNotEmpty) ...[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: value.map((filePath) {
+                    final fileName =
+                        filePath.split(Platform.pathSeparator).last;
+                    return Chip(
+                      label: Text(fileName),
+                      onDeleted: () => _removeFile(filePath),
+                      deleteIcon: const Icon(Icons.close, size: 18),
+                      backgroundColor:
+                          theme.primaryColor.withValues(alpha: 0.1),
+                      labelStyle: TextStyle(
+                        color: theme.colorScheme.onSurface,
+                        fontSize: 13,
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+              ],
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _pickFiles(context),
+                  icon: const Icon(Icons.upload_file, size: 20),
+                  label: Text(
+                    value.isEmpty
+                        ? ((_placeholder) ??
+                            (_isMultiple ? 'Upload Files' : 'Upload File'))
+                        : 'Add ${_isMultiple ? 'More Files' : 'Another File'}',
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: theme.primaryColor,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // if (error != null)
+        //   Padding(
+        //     padding: const EdgeInsets.only(top: 6),
+        //     child: Text(
+        //       error,
+        //       style: TextStyle(
+        //         color: theme.colorScheme.error,
+        //         fontSize: 12,
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }

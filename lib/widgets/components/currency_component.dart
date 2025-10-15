@@ -7,6 +7,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
+import '../shared/input_decoration_utils.dart';
 
 class CurrencyComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -18,7 +20,16 @@ class CurrencyComponent extends StatelessWidget {
   /// Callback triggered when the currency value changes.
   final ValueChanged<num?> onChanged;
 
-  const CurrencyComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const CurrencyComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   /// Whether this field is marked as required.
   bool get _isRequired => component.required;
@@ -35,10 +46,17 @@ class CurrencyComponent extends StatelessWidget {
   /// Currency symbol (default: $).
   String get _currencySymbol => component.raw['currency'] ?? '\$';
 
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => component.raw['tooltip'];
+
   /// Parses the string input to a number.
   num? _parse(String input) {
     if (input.trim().isEmpty) return null;
-    return num.tryParse(input.replaceAll(',', '').replaceAll(_currencySymbol, ''));
+    return num.tryParse(
+        input.replaceAll(',', '').replaceAll(_currencySymbol, ''));
   }
 
   /// Validates the input against required and min/max constraints.
@@ -63,19 +81,36 @@ class CurrencyComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initialText = value?.toString() ?? component.defaultValue?.toString();
+    final initialText =
+        value?.toString() ?? component.defaultValue?.toString() ?? '';
+    final hasContent = initialText.isNotEmpty;
 
-    return TextFormField(
-      initialValue: initialText,
-      keyboardType: TextInputType.numberWithOptions(decimal: true),
-      decoration: InputDecoration(
-        labelText: component.label,
-        hintText: _placeholder ?? '${_currencySymbol}0.00',
-        prefixText: _currencySymbol,
-        border: const OutlineInputBorder(),
-      ),
-      onChanged: (input) => onChanged(_parse(input)),
-      validator: _validator,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FieldLabel(
+          label: component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: hasContent,
+          onClear: () => onChanged(null),
+          number: fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
+        TextFormField(
+          initialValue: initialText,
+          keyboardType: TextInputType.numberWithOptions(decimal: true),
+          decoration: InputDecorationUtils.createDecoration(
+            context,
+            hintText: _placeholder ?? '${_currencySymbol}0.00',
+            suffixIcon: Icon(Icons.attach_money),
+          ),
+          onChanged: (input) => onChanged(_parse(input)),
+          validator: _validator,
+        ),
+      ],
     );
   }
 }

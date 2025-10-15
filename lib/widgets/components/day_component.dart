@@ -7,6 +7,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
+import '../shared/input_decoration_utils.dart';
 
 class DayComponent extends StatefulWidget {
   /// The Form.io component definition.
@@ -18,7 +20,16 @@ class DayComponent extends StatefulWidget {
   /// Callback called when the date changes.
   final ValueChanged<String?> onChanged;
 
-  const DayComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const DayComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   @override
   State<DayComponent> createState() => _DayComponentState();
@@ -32,11 +43,19 @@ class _DayComponentState extends State<DayComponent> {
   bool get _isRequired => widget.component.required;
 
   int get _startYear => widget.component.raw['fields']?['year']?['min'] ?? 1900;
-  int get _endYear => widget.component.raw['fields']?['year']?['max'] ?? DateTime.now().year;
+  int get _endYear =>
+      widget.component.raw['fields']?['year']?['max'] ?? DateTime.now().year + 10;
+
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => widget.component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => widget.component.raw['tooltip'];
 
   void _updateValue() {
     if (_day != null && _month != null && _year != null) {
-      final formatted = '${_year!.toString().padLeft(4, '0')}-${_month!.toString().padLeft(2, '0')}-${_day!.toString().padLeft(2, '0')}';
+      final formatted =
+          '${_year!.toString().padLeft(4, '0')}-${_month!.toString().padLeft(2, '0')}-${_day!.toString().padLeft(2, '0')}';
       widget.onChanged(formatted);
     } else {
       widget.onChanged(null);
@@ -56,23 +75,56 @@ class _DayComponentState extends State<DayComponent> {
     }
   }
 
+  String? validator() {
+    if (_isRequired && (_day == null || _month == null || _year == null)) {
+      return '${widget.component.label} is required.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasError = _isRequired && (_day == null || _month == null || _year == null);
+    final hasContent = _day != null || _month != null || _year != null;
+    // final error = _validator();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelSmall),
-        const SizedBox(height: 8),
+        FieldLabel(
+          label: widget.component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: hasContent,
+          onClear: () {
+            setState(() {
+              _day = null;
+              _month = null;
+              _year = null;
+            });
+            _updateValue();
+          },
+          number: widget.fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
         Row(
           children: [
             // Day
-            Expanded(
+            Flexible(
               child: DropdownButtonFormField<int>(
                 value: _day,
-                decoration: const InputDecoration(labelText: 'Day'),
-                items: List.generate(31, (i) => i + 1).map((d) => DropdownMenuItem(value: d, child: Text(d.toString()))).toList(),
+                alignment: Alignment.center,
+                icon: SizedBox.shrink(),
+                style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
+                decoration: InputDecorationUtils.createDropdownDecoration(
+                  context,
+                  hintText: 'Day',
+                ),
+                items: List.generate(31, (i) => i + 1)
+                    .map((d) =>
+                        DropdownMenuItem(value: d, child: Text(d.toString())))
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _day = val);
                   _updateValue();
@@ -82,11 +134,20 @@ class _DayComponentState extends State<DayComponent> {
             const SizedBox(width: 8),
 
             // Month
-            Expanded(
+            Flexible(
               child: DropdownButtonFormField<int>(
                 value: _month,
-                decoration: const InputDecoration(labelText: 'Month'),
-                items: List.generate(12, (i) => i + 1).map((m) => DropdownMenuItem(value: m, child: Text(m.toString()))).toList(),
+                alignment: Alignment.center,
+                icon: SizedBox.shrink(),
+                style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
+                decoration: InputDecorationUtils.createDropdownDecoration(
+                  context,
+                  hintText: 'Month',
+                ),
+                items: List.generate(12, (i) => i + 1)
+                    .map((m) =>
+                        DropdownMenuItem(value: m, child: Text(m.toString())))
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _month = val);
                   _updateValue();
@@ -96,11 +157,21 @@ class _DayComponentState extends State<DayComponent> {
             const SizedBox(width: 8),
 
             // Year
-            Expanded(
+            Flexible(
               child: DropdownButtonFormField<int>(
                 value: _year,
-                decoration: const InputDecoration(labelText: 'Year'),
-                items: List.generate(_endYear - _startYear + 1, (i) => _endYear - i).map((y) => DropdownMenuItem(value: y, child: Text(y.toString()))).toList(),
+                alignment: Alignment.center,
+                icon: SizedBox.shrink(),
+                style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
+                decoration: InputDecorationUtils.createDropdownDecoration(
+                  context,
+                  hintText: 'Year',
+                ),
+                items: List.generate(
+                        _endYear - _startYear + 1, (i) => _endYear - i)
+                    .map((y) =>
+                        DropdownMenuItem(value: y, child: Text(y.toString())))
+                    .toList(),
                 onChanged: (val) {
                   setState(() => _year = val);
                   _updateValue();
@@ -109,11 +180,17 @@ class _DayComponentState extends State<DayComponent> {
             ),
           ],
         ),
-        if (hasError)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text('${widget.component.label} is required.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
-          ),
+        // if (error != null)
+        //   Padding(
+        //     padding: const EdgeInsets.only(top: 6),
+        //     child: Text(
+        //       error,
+        //       style: TextStyle(
+        //         color: Theme.of(context).colorScheme.error,
+        //         fontSize: 12,
+        //       ),
+        //     ),
+        //   ),
       ],
     );
   }

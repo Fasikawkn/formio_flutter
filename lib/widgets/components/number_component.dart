@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
+import '../shared/input_decoration_utils.dart';
 
 class NumberComponent extends StatelessWidget {
   /// The Form.io component definition.
@@ -17,7 +19,16 @@ class NumberComponent extends StatelessWidget {
   /// Callback called when the user updates the number.
   final ValueChanged<num?> onChanged;
 
-  const NumberComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const NumberComponent(
+      {Key? key,
+      required this.component,
+      required this.value,
+      required this.onChanged,
+      this.fieldNumber})
+      : super(key: key);
 
   /// Returns true if the field is marked as required.
   bool get _isRequired => component.required;
@@ -30,6 +41,12 @@ class NumberComponent extends StatelessWidget {
 
   /// Returns placeholder text, if available.
   String? get _placeholder => component.raw['placeholder'];
+
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => component.raw['tooltip'];
 
   /// Parses a string to a numeric value, handling empty or invalid input.
   num? _parse(String input) {
@@ -60,12 +77,35 @@ class NumberComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      initialValue: value?.toString() ?? component.defaultValue?.toString(),
-      decoration: InputDecoration(labelText: component.label, hintText: _placeholder, border: const OutlineInputBorder()),
-      keyboardType: TextInputType.number,
-      onChanged: (input) => onChanged(_parse(input)),
-      validator: _validator,
+    final currentValue =
+        value?.toString() ?? component.defaultValue?.toString() ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FieldLabel(
+          label: component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: currentValue.isNotEmpty,
+          onClear: () => onChanged(null),
+          number: fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
+        TextFormField(
+          key: ValueKey(component.key),
+          initialValue: currentValue,
+          decoration: InputDecorationUtils.createDecoration(
+            context,
+            hintText: _placeholder,
+          ),
+          keyboardType: TextInputType.number,
+          onChanged: (input) => onChanged(_parse(input)),
+          validator: _validator,
+        ),
+      ],
     );
   }
 }

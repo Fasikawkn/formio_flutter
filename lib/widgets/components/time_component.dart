@@ -6,6 +6,8 @@
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../shared/field_label.dart';
+import '../shared/input_decoration_utils.dart';
 
 class TimeComponent extends StatefulWidget {
   /// The Form.io component definition.
@@ -17,7 +19,16 @@ class TimeComponent extends StatefulWidget {
   /// Callback called when the time changes.
   final ValueChanged<String?> onChanged;
 
-  const TimeComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Optional field number to display before the label
+  final int? fieldNumber;
+
+  const TimeComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.fieldNumber,
+  }) : super(key: key);
 
   @override
   State<TimeComponent> createState() => _TimeComponentState();
@@ -28,6 +39,12 @@ class _TimeComponentState extends State<TimeComponent> {
 
   bool get _isRequired => widget.component.required;
   String? get _placeholder => widget.component.raw['placeholder'];
+
+  /// Retrieves the description text if available in the raw JSON.
+  String? get _description => widget.component.raw['description'];
+
+  /// Retrieves the tooltip text if available in the raw JSON.
+  String? get _tooltip => widget.component.raw['tooltip'];
 
   @override
   void initState() {
@@ -45,34 +62,65 @@ class _TimeComponentState extends State<TimeComponent> {
   }
 
   Future<void> _pickTime() async {
-    final picked = await showTimePicker(context: context, initialTime: _selectedTime ?? TimeOfDay.now());
+    final picked = await showTimePicker(
+        context: context, initialTime: _selectedTime ?? TimeOfDay.now());
 
     if (picked != null) {
       setState(() => _selectedTime = picked);
-      final formatted = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      final formatted =
+          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
       widget.onChanged(formatted);
     }
   }
 
+  String? validator() {
+    if (_isRequired && _selectedTime == null) {
+      return '${widget.component.label} is required.';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasError = _isRequired && _selectedTime == null;
-    final displayText = _selectedTime != null ? _selectedTime!.format(context) : (_placeholder ?? 'Select time');
+    final displayText =
+        _selectedTime != null ? _selectedTime!.format(context) : '';
+    // final error = _validator();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(widget.component.label, style: Theme.of(context).textTheme.labelSmall),
-        const SizedBox(height: 6),
+        FieldLabel(
+          label: widget.component.label,
+          isRequired: _isRequired,
+          showClearButton: true,
+          hasContent: _selectedTime != null,
+          onClear: () {
+            setState(() => _selectedTime = null);
+            widget.onChanged(null);
+          },
+          number: widget.fieldNumber,
+          description: _description,
+          tooltip: _tooltip,
+        ),
         InkWell(
           onTap: _pickTime,
-          child: InputDecorator(decoration: InputDecoration(hintText: _placeholder ?? 'HH:mm', border: const OutlineInputBorder()), child: Text(displayText)),
-        ),
-        if (hasError)
-          Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text('${widget.component.label} is required.', style: TextStyle(color: Theme.of(context).colorScheme.error, fontSize: 12)),
+          child: InputDecorator(
+            decoration: InputDecorationUtils.createDecoration(
+              context,
+              suffixIcon: const Icon(Icons.access_time),
+            ),
+            child: Text(
+              displayText.isEmpty
+                  ? ' ${_placeholder?.isEmpty ?? true ? '12:00' : _placeholder} '
+                  : displayText,
+              style: displayText.isEmpty
+                  ? TextStyle(
+                      color: Theme.of(context).hintColor.withValues(alpha: 0.6))
+                  : Theme.of(context).textTheme.bodyMedium,
+            ),
           ),
+        ),
       ],
     );
   }

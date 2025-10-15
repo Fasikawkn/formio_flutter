@@ -51,7 +51,11 @@ typedef OnComponentChanged = void Function(dynamic value);
 
 class ComponentFactory {
   /// Creates the appropriate widget for a given component.
-  static Widget build({required ComponentModel component, dynamic value, required OnComponentChanged onChanged}) {
+  static Widget build(
+      {required ComponentModel component,
+      dynamic value,
+      required OnComponentChanged onChanged,
+      int? fieldNumber}) {
     if (component.conditional != null) {
       final when = component.conditional?['when'];
       final eq = component.conditional?['eq'];
@@ -63,90 +67,194 @@ class ComponentFactory {
         return const SizedBox.shrink();
       }
     }
+
     switch (component.type) {
       // Basic
       case 'textfield':
-        return TextFieldComponent(component: component, value: value, onChanged: onChanged);
+      case 'url':
+        return TextFieldComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            fieldNumber: fieldNumber);
       case 'textarea':
-        return TextAreaComponent(component: component, value: value, onChanged: onChanged);
+        return TextAreaComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            fieldNumber: fieldNumber);
       case 'number':
-        return NumberComponent(component: component, value: value, onChanged: onChanged);
+        return NumberComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            fieldNumber: fieldNumber);
       case 'password':
-        return PasswordComponent(component: component, value: value, onChanged: onChanged);
+        return PasswordComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            fieldNumber: fieldNumber);
       case 'email':
-        return EmailComponent(component: component, value: value, onChanged: onChanged);
+        return EmailComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            fieldNumber: fieldNumber);
       case 'phoneNumber':
-        return PhoneNumberComponent(component: component, value: value, onChanged: onChanged);
+        return PhoneNumberComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'checkbox':
-        return CheckboxComponent(component: component, value: value == true, onChanged: onChanged);
+        return CheckboxComponent(
+            component: component, value: value == true, onChanged: onChanged);
       case 'radio':
-        return RadioComponent(component: component, value: value, onChanged: onChanged);
+        return RadioComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'select':
-        return SelectComponent(component: component, value: value, onChanged: onChanged);
+        return SelectComponent(
+            component: component,
+            value: value,
+            onChanged: onChanged,
+            fieldNumber: fieldNumber);
       case 'selectboxes':
-        return SelectBoxesComponent(component: component, value: value is Map<String, bool> ? value : <String, bool>{}, onChanged: onChanged);
+        return SelectBoxesComponent(
+            component: component,
+            value: value is Map<String, bool> ? value : <String, bool>{},
+            onChanged: onChanged);
       case 'button':
-        return ButtonComponent(component: component, onPressed: () {}, isDisabled: false);
+        return ButtonComponent(
+            component: component, onPressed: () {}, isDisabled: false);
 
       // Advanced
       case 'datetime':
-        return DateTimeComponent(component: component, value: value, onChanged: onChanged);
+        return DateTimeComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'day':
-        return DayComponent(component: component, value: value, onChanged: onChanged);
+        return DayComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'time':
-        return TimeComponent(component: component, value: value, onChanged: onChanged);
+        return TimeComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'currency':
-        return CurrencyComponent(component: component, value: value, onChanged: onChanged);
+        return CurrencyComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'survey':
-        return SurveyComponent(component: component, value: value is Map<String, String> ? value : <String, String>{}, onChanged: onChanged);
+        return SurveyComponent(
+            component: component,
+            value: value is Map<String, String> ? value : <String, String>{},
+            onChanged: onChanged);
       case 'signature':
-        return SignatureComponent(component: component, value: value, onChanged: onChanged);
+        return SignatureComponent(
+            component: component, value: value, onChanged: onChanged);
 
       // Data
       case 'hidden':
-        return HiddenComponent(component: component, value: value, onChanged: onChanged);
+        return HiddenComponent(
+            component: component, value: value, onChanged: onChanged);
       case 'container':
-        return ContainerComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return ContainerComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'datamap':
-        return DataMapComponent(component: component, value: value is Map<String, String> ? value : {}, onChanged: onChanged);
+        return DataMapComponent(
+            component: component,
+            value: value is Map<String, String> ? value : {},
+            onChanged: onChanged);
       case 'datagrid':
-        return DataGridComponent(component: component, value: value is List<Map<String, dynamic>> ? value : [], onChanged: onChanged);
+        return DataGridComponent(
+            component: component,
+            value: value is List<Map<String, dynamic>> ? value : [],
+            onChanged: onChanged);
       case 'editgrid':
-        return EditGridComponent(component: component, value: value is List<Map<String, dynamic>> ? value : [], onChanged: onChanged);
+        return EditGridComponent(
+            component: component,
+            value: value is List<Map<String, dynamic>> ? value : [],
+            onChanged: onChanged);
 
       // Layout
       case 'panel':
-        return PanelComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return PanelComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'columns':
-        return ColumnsComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return ColumnsComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'htmlelement':
         return HtmlElementComponent(component: component);
       case 'content':
         return ContentComponent(component: component);
       case 'fieldset':
-        return FieldSetComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return FieldSetComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'table':
-        return TableComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return TableComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'tabs':
-        return TabsComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+      return TabsComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
       case 'well':
-        return WellComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return WellComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
 
       // Premium
       case 'file':
-        return FileComponent(component: component, value: value is List<String> ? value : [], onChanged: onChanged);
+        return FileComponent(
+            component: component,
+            value: value is List<String> ? value : [],
+            onChanged: onChanged);
       case 'nestedform':
-        return NestedFormComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return NestedFormComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'captcha':
-        return CaptchaComponent(component: component, value: value, onChanged: onChanged);
+        return CaptchaComponent(
+            component: component, value: value, onChanged: onChanged);
 
       // Custom
       case 'custom':
-        return CustomComponent(component: component, value: value, onChanged: onChanged);
+        return CustomComponent(
+            component: component, value: value, onChanged: onChanged);
 
       // Fallback
       default:
-        return Text('Unsupported component type: ${component.type}', style: const TextStyle(color: Colors.red));
+        return Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.red.shade50,
+            border: Border.all(color: Colors.red),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Unsupported component type: "${component.type}"',
+                style: const TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Key: ${component.key}',
+                style: TextStyle(
+                  color: Colors.red.shade700,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        );
     }
   }
 }
