@@ -198,7 +198,10 @@ class ComponentFactory {
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged);
       case 'tabs':
-      return TabsComponent(component: component, value: value is Map<String, dynamic> ? value : {}, onChanged: onChanged);
+        return TabsComponent(
+            component: component,
+            value: value is Map<String, dynamic> ? value : {},
+            onChanged: onChanged);
       case 'well':
         return WellComponent(
             component: component,
@@ -227,34 +230,7 @@ class ComponentFactory {
 
       // Fallback
       default:
-        return Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: Colors.red.shade50,
-            border: Border.all(color: Colors.red),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Unsupported component type: "${component.type}"',
-                style: const TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Key: ${component.key}',
-                style: TextStyle(
-                  color: Colors.red.shade700,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        );
+        return SizedBox.shrink();
     }
   }
 }

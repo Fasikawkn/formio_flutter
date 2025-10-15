@@ -15,10 +15,10 @@ class DateTimeComponent extends StatefulWidget {
   final ComponentModel component;
 
   /// The current selected DateTime value.
-  final DateTime? value;
+  final String? value;
 
   /// Callback triggered when the user selects a new date/time.
-  final ValueChanged<DateTime?> onChanged;
+  final ValueChanged<String?> onChanged;
 
   /// Optional field number to display before the label
   final int? fieldNumber;
@@ -60,15 +60,18 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
   void initState() {
     super.initState();
     _controller = TextEditingController(
-        text: widget.value != null ? _formatDateTime(widget.value!) : '');
+        text: widget.value != null
+            ? _formatDateTime(DateTime.parse(widget.value!))
+            : '');
   }
 
   @override
   void didUpdateWidget(covariant DateTimeComponent oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.value != oldWidget.value) {
-      _controller.text =
-          widget.value != null ? _formatDateTime(widget.value!) : '';
+      _controller.text = widget.value != null
+          ? _formatDateTime(DateTime.parse(widget.value!))
+          : '';
     }
   }
 
@@ -108,7 +111,9 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
       // Show both date and time picker
       selectedDateTime = await showOmniDateTimePicker(
         context: context,
-        initialDate: widget.value ?? DateTime.now(),
+        initialDate: widget.value != null
+            ? DateTime.parse(widget.value!)
+            : DateTime.now(),
         firstDate: DateTime(1900),
         lastDate: DateTime(2100),
         is24HourMode: false,
@@ -120,7 +125,9 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
       // Show only date picker
       selectedDateTime = await showOmniDateTimePicker(
         context: context,
-        initialDate: widget.value ?? DateTime.now(),
+        initialDate: widget.value != null
+            ? DateTime.parse(widget.value!)
+            : DateTime.now(),
         firstDate: DateTime(1900),
         lastDate: DateTime(2100),
         type: OmniDateTimePickerType.date,
@@ -130,7 +137,9 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
       // Show only time picker
       selectedDateTime = await showOmniDateTimePicker(
         context: context,
-        initialDate: widget.value ?? DateTime.now(),
+        initialDate: widget.value != null
+            ? DateTime.parse(widget.value!)
+            : DateTime.now(),
         type: OmniDateTimePickerType.time,
         is24HourMode: false,
         isShowSeconds: false,
@@ -140,7 +149,7 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
     }
 
     if (selectedDateTime != null) {
-      widget.onChanged(selectedDateTime);
+      widget.onChanged(selectedDateTime.toString());
     }
   }
 

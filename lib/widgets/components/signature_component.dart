@@ -74,7 +74,7 @@ class _SignatureComponentState extends State<SignatureComponent> {
       final signature = await _controller.toPngBytes();
       if (signature != null) {
         final base64Image = base64Encode(signature);
-        widget.onChanged('data:image/png;base64,$base64Image');
+        widget.onChanged('$base64Image');
       }
     } else {
       widget.onChanged(null);

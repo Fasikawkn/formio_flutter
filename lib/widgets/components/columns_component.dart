@@ -45,13 +45,14 @@ class ColumnsComponent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final columns = _columns;
+    final columnLength = columns.length;
 
     return Scrollbar(
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.only(bottom: 25),
         child: SizedBox(
-          width: MediaQuery.of(context).size.width * 1.5,
+          width: MediaQuery.of(context).size.width * (columnLength * 0.8),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,

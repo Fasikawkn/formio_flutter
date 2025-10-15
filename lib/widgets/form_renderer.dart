@@ -56,7 +56,7 @@ class _FormRendererState extends State<FormRenderer> {
   @override
   void didUpdateWidget(covariant FormRenderer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if(oldWidget.isSubmitting != widget.isSubmitting) {
+    if (oldWidget.isSubmitting != widget.isSubmitting) {
       setState(() {
         _isSubmitting = widget.isSubmitting;
       });
@@ -138,56 +138,16 @@ class _FormRendererState extends State<FormRenderer> {
     if (component.type == 'button' &&
         (component.raw['action'] == 'submit' ||
             component.raw['action'] == null)) {
-      return SizedBox(
-        width: double.infinity,
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).primaryColor,
-            foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(52),
-            elevation: 0,
-            shadowColor: Colors.transparent,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          ).copyWith(
-            backgroundColor: WidgetStateProperty.resolveWith<Color>(
-              (Set<WidgetState> states) {
-                if (states.contains(WidgetState.pressed)) {
-                  return Theme.of(context).primaryColor.withValues(alpha: 0.8);
-                }
-                if (states.contains(WidgetState.disabled)) {
-                  return Theme.of(context).disabledColor;
-                }
-                return Theme.of(context).primaryColor;
-              },
-            ),
-          ),
-          onPressed: _isSubmitting ? null : _handleSubmit,
-          child: _isSubmitting
-              ? SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                  ),
-                )
-              : Text(
-                  component.label.isNotEmpty ? component.label : 'Submit',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
-      );
+      return SizedBox.shrink();
+      
     }
 
     final fieldWidget = ComponentFactory.build(
       component: component,
       value: _formData[component.key],
-      onChanged: (value) => _updateField(component.key, value),
+      onChanged: (value){
+        _updateField(component.key, value);
+      },
       fieldNumber: fieldNumber,
     );
 
@@ -215,7 +175,6 @@ class _FormRendererState extends State<FormRenderer> {
 
   @override
   Widget build(BuildContext context) {
-
     // Calculate field numbers for non-button, visible components
     int fieldNumber = 0;
     final componentNumbers = <String, int>{};
@@ -229,20 +188,78 @@ class _FormRendererState extends State<FormRenderer> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        ...widget.form.components.map((component) {
-          // Skip hidden components
-          if (!_shouldShowComponent(component)) {
-            return const SizedBox.shrink();
-          }
+        Expanded(
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ...widget.form.components.map((component) {
+                  // Skip hidden components
+                  if (!_shouldShowComponent(component)) {
+                    return const SizedBox.shrink();
+                  }
 
-          final fieldNum = componentNumbers[component.key];
+                  final fieldNum = componentNumbers[component.key];
 
-          return Padding(
-            key: ValueKey('component_${component.key}_${component.type}'),
-            padding: const EdgeInsets.only(bottom: 20),
-            child: _buildComponent(component, fieldNumber: fieldNum),
-          );
-        }).toList(),
+                  return Padding(
+                    key: ValueKey(
+                        'component_${component.key}_${component.type}'),
+                    padding: const EdgeInsets.only(bottom: 20),
+                    child: _buildComponent(component, fieldNumber: fieldNum),
+                  );
+                }).toList(),
+              ],
+            ),
+          ),
+        ),
+        Container(
+          margin: const EdgeInsets.symmetric(vertical: 20,horizontal: 10),
+          width: double.infinity,
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).primaryColor,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(52),
+              elevation: 0,
+              shadowColor: Colors.transparent,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            ).copyWith(
+              backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                (Set<WidgetState> states) {
+                  if (states.contains(WidgetState.pressed)) {
+                    return Theme.of(context)
+                        .primaryColor
+                        .withValues(alpha: 0.8);
+                  }
+                  if (states.contains(WidgetState.disabled)) {
+                    return Theme.of(context).disabledColor;
+                  }
+                  return Theme.of(context).primaryColor;
+                },
+              ),
+            ),
+            onPressed: _isSubmitting ? null : _handleSubmit,
+            child: _isSubmitting
+                ? SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    ),
+                  )
+                : Text(
+                    'Submit Form',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+          ),
+        )
       ],
     );
   }
