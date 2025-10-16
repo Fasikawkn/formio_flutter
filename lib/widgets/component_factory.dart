@@ -11,28 +11,28 @@ import 'components/captcha_component.dart';
 import 'components/checkbox_component.dart';
 import 'components/columns_component.dart';
 import 'components/container_component.dart';
-import 'components/content_component.dart';
+// import 'components/content_component.dart';
 import 'components/currency_component.dart';
 // Custom
-import 'components/custom_component.dart';
+// import 'components/custom_component.dart';
 import 'components/data_grid_component.dart';
-import 'components/data_map_component.dart';
+// import 'components/data_map_component.dart';
 // Advanced
 import 'components/datetime_component.dart';
 import 'components/day_component.dart';
-import 'components/edit_grid_component.dart';
+// import 'components/edit_grid_component.dart';
 import 'components/email_component.dart';
 import 'components/fieldset_component.dart';
 // Premium
 import 'components/file_component.dart';
 // Data
 import 'components/hidden_component.dart';
-import 'components/html_element_component.dart';
-import 'components/nested_form_component.dart';
+// import 'components/html_element_component.dart';
+// import 'components/nested_form_component.dart';
 import 'components/number_component.dart';
 // Layout
 import 'components/panel_component.dart';
-import 'components/password_component.dart';
+// import 'components/password_component.dart';
 import 'components/phone_number_component.dart';
 import 'components/radio_component.dart';
 import 'components/select_boxes_component.dart';
@@ -45,7 +45,7 @@ import 'components/text_area_component.dart';
 // Basic
 import 'components/text_field_component.dart';
 import 'components/time_component.dart';
-import 'components/well_component.dart';
+// import 'components/well_component.dart';
 
 typedef OnComponentChanged = void Function(dynamic value);
 
@@ -89,12 +89,12 @@ class ComponentFactory {
             value: value,
             onChanged: onChanged,
             fieldNumber: fieldNumber);
-      case 'password':
-        return PasswordComponent(
-            component: component,
-            value: value,
-            onChanged: onChanged,
-            fieldNumber: fieldNumber);
+      // case 'password':
+      //   return PasswordComponent(
+      //       component: component,
+      //       value: value,
+      //       onChanged: onChanged,
+      //       fieldNumber: fieldNumber);
       case 'email':
         return EmailComponent(
             component: component,
@@ -156,21 +156,21 @@ class ComponentFactory {
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged);
-      case 'datamap':
-        return DataMapComponent(
-            component: component,
-            value: value is Map<String, String> ? value : {},
-            onChanged: onChanged);
+      // case 'datamap':
+      //   return DataMapComponent(
+      //       component: component,
+      //       value: value is Map<String, String> ? value : {},
+      //       onChanged: onChanged);
       case 'datagrid':
         return DataGridComponent(
             component: component,
             value: value is List<Map<String, dynamic>> ? value : [],
             onChanged: onChanged);
-      case 'editgrid':
-        return EditGridComponent(
-            component: component,
-            value: value is List<Map<String, dynamic>> ? value : [],
-            onChanged: onChanged);
+      // case 'editgrid':
+      //   return EditGridComponent(
+      //       component: component,
+      //       value: value is List<Map<String, dynamic>> ? value : [],
+      //       onChanged: onChanged);
 
       // Layout
       case 'panel':
@@ -183,10 +183,10 @@ class ComponentFactory {
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged);
-      case 'htmlelement':
-        return HtmlElementComponent(component: component);
-      case 'content':
-        return ContentComponent(component: component);
+      // case 'htmlelement':
+      //   return HtmlElementComponent(component: component);
+      // case 'content':
+      //   return ContentComponent(component: component);
       case 'fieldset':
         return FieldSetComponent(
             component: component,
@@ -202,11 +202,11 @@ class ComponentFactory {
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged);
-      case 'well':
-        return WellComponent(
-            component: component,
-            value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+      // case 'well':
+      //   return WellComponent(
+      //       component: component,
+      //       value: value is Map<String, dynamic> ? value : {},
+      //       onChanged: onChanged);
 
       // Premium
       case 'file':
@@ -214,19 +214,19 @@ class ComponentFactory {
             component: component,
             value: value is List<String> ? value : [],
             onChanged: onChanged);
-      case 'nestedform':
-        return NestedFormComponent(
-            component: component,
-            value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+      // case 'nestedform':
+      //   return NestedFormComponent(
+      //       component: component,
+      //       value: value is Map<String, dynamic> ? value : {},
+      //       onChanged: onChanged);
       case 'captcha':
         return CaptchaComponent(
             component: component, value: value, onChanged: onChanged);
 
       // Custom
-      case 'custom':
-        return CustomComponent(
-            component: component, value: value, onChanged: onChanged);
+      // case 'custom':
+      //   return CustomComponent(
+      //       component: component, value: value, onChanged: onChanged);
 
       // Fallback
       default:
