@@ -225,7 +225,7 @@ class ComponentFactory {
                         .toList()
                     : []),
             onChanged: (files) {
-               onFileChanged?.call(component.key, files);
+              onFileChanged?.call(component.key, files);
             });
       // case 'nestedform':
       //   return NestedFormComponent(

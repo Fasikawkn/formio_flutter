@@ -36,7 +36,6 @@ class FormRenderer extends StatefulWidget {
   /// Callback when attachments change (separate from form data)
   final OnAttachmentsChanged? onAttachmentsChanged;
 
-
   const FormRenderer({
     Key? key,
     required this.form,
@@ -106,7 +105,8 @@ class _FormRendererState extends State<FormRenderer> {
 
     setState(() => _isSubmitting = true);
 
-    try { widget.onSubmit?.call(_formData);
+    try {
+      widget.onSubmit?.call(_formData);
     } catch (e) {
       final error = e is ApiException ? e.message : 'Unknown error';
       widget.onError?.call(error);
