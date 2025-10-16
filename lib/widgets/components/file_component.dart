@@ -4,23 +4,26 @@
 /// Handles file selection, preview, and basic validation.
 /// Upload logic (to Form.io or custom storage) must be handled externally.
 
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:mime/mime.dart';
 
 import '../../models/component.dart';
+import '../../models/file_data.dart';
 import '../shared/field_label.dart';
 
 class FileComponent extends StatelessWidget {
   /// The Form.io file component definition.
   final ComponentModel component;
 
-  /// Currently selected file paths (may be local or uploaded URLs).
-  final List<String> value;
+  /// Currently selected files with metadata and base64 content.
+  final List<FileData> value;
 
   /// Callback triggered when files are selected or cleared.
-  final ValueChanged<List<String>> onChanged;
+  final ValueChanged<List<FileData>> onChanged;
 
   /// Optional field number to display before the label
   final int? fieldNumber;
@@ -68,14 +71,46 @@ class FileComponent extends StatelessWidget {
           : null,
     );
 
-    if (result != null) {
-      final paths = result.paths.whereType<String>().toList();
-      onChanged(paths);
+    if (result != null && result.files.isNotEmpty) {
+      final List<FileData> fileDataList = [];
+
+      for (final file in result.files) {
+        if (file.path != null) {
+          try {
+            // Read file bytes
+            final fileBytes = await File(file.path!).readAsBytes();
+
+            // Convert to base64
+            final base64Data = base64Encode(fileBytes);
+
+            // Get mimetype
+            final mimetype =
+                lookupMimeType(file.path!) ?? 'application/octet-stream';
+
+            // Create FileData object
+            final fileData = FileData(
+              name: file.name,
+              type: 'binary',
+              datas: base64Data,
+              mimetype: mimetype,
+            );
+
+            fileDataList.add(fileData);
+          } catch (e) {
+            // Handle file reading error
+            debugPrint('Error reading file ${file.name}: $e');
+          }
+        }
+      }
+
+      if (fileDataList.isNotEmpty) {
+        onChanged(fileDataList);
+      }
     }
   }
 
-  void _removeFile(String path) {
-    final updated = List<String>.from(value)..remove(path);
+  void _removeFile(FileData fileData) {
+    final updated = List<FileData>.from(value)..remove(fileData);
     onChanged(updated);
   }
 
@@ -95,7 +130,7 @@ class FileComponent extends StatelessWidget {
     final theme = Theme.of(context);
     final borderColor = Colors.grey.withValues(alpha: 0.3);
 
-    return FormField<List<String>>(
+    return FormField<List<FileData>>(
       initialValue: value,
       validator: (_) {
         if (_isRequired && value.isEmpty) {
@@ -103,7 +138,7 @@ class FileComponent extends StatelessWidget {
         }
         return null;
       },
-      builder: (FormFieldState<List<String>> field) {
+      builder: (FormFieldState<List<FileData>> field) {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
@@ -137,13 +172,11 @@ class FileComponent extends StatelessWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: value.map((filePath) {
-                        final fileName =
-                            filePath.split(Platform.pathSeparator).last;
+                      children: value.map((fileData) {
                         return Chip(
-                          label: Text(fileName),
+                          label: Text(fileData.name),
                           onDeleted: () {
-                            _removeFile(filePath);
+                            _removeFile(fileData);
                             field.didChange(value);
                           },
                           deleteIcon: const Icon(Icons.close, size: 18),

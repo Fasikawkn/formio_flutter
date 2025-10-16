@@ -6,6 +6,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/component.dart';
+import '../models/file_data.dart';
 import 'components/button_component.dart';
 import 'components/captcha_component.dart';
 import 'components/checkbox_component.dart';
@@ -48,14 +49,17 @@ import 'components/time_component.dart';
 // import 'components/well_component.dart';
 
 typedef OnComponentChanged = void Function(dynamic value);
+typedef OnFileChanged = void Function(String key, List<FileData> files);
 
 class ComponentFactory {
   /// Creates the appropriate widget for a given component.
-  static Widget build(
-      {required ComponentModel component,
-      dynamic value,
-      required OnComponentChanged onChanged,
-      int? fieldNumber}) {
+  static Widget build({
+    required ComponentModel component,
+    dynamic value,
+    required OnComponentChanged onChanged,
+    OnFileChanged? onFileChanged,
+    int? fieldNumber,
+  }) {
     if (component.conditional != null) {
       final when = component.conditional?['when'];
       final eq = component.conditional?['eq'];
@@ -212,8 +216,17 @@ class ComponentFactory {
       case 'file':
         return FileComponent(
             component: component,
-            value: value is List<String> ? value : [],
-            onChanged: onChanged);
+            value: value is List<FileData>
+                ? value
+                : (value is List
+                    ? value
+                        .whereType<Map<String, dynamic>>()
+                        .map((e) => FileData.fromJson(e))
+                        .toList()
+                    : []),
+            onChanged: (files) {
+               onFileChanged?.call(component.key, files);
+            });
       // case 'nestedform':
       //   return NestedFormComponent(
       //       component: component,

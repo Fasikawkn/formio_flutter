@@ -24,6 +24,7 @@ export 'models/component.dart';
 export 'models/form.dart';
 export 'models/submission.dart';
 export 'models/user.dart';
+export 'models/file_data.dart';
 // Networking
 export 'network/api_client.dart';
 export 'network/endpoints.dart';

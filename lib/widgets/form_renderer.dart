@@ -11,12 +11,19 @@ import 'package:flutter/material.dart';
 
 import '../core/exceptions.dart';
 import '../models/component.dart';
+import '../models/file_data.dart';
 import '../models/form.dart';
 import 'component_factory.dart';
 
 typedef OnFormChanged = void Function(Map<String, dynamic> data);
 typedef OnFormSubmitted = void Function(Map<String, dynamic> data);
 typedef OnFormSubmitFailed = void Function(String error);
+typedef OnAttachmentsChanged = void Function(
+    Map<String, List<FileData>> attachments);
+typedef OnFormSubmittedWithAttachments = void Function(
+  Map<String, dynamic> data,
+  Map<String, List<FileData>> attachments,
+);
 
 class FormRenderer extends StatefulWidget {
   final FormModel form;
@@ -26,6 +33,10 @@ class FormRenderer extends StatefulWidget {
   final Map<String, dynamic>? initialData;
   final bool isSubmitting;
 
+  /// Callback when attachments change (separate from form data)
+  final OnAttachmentsChanged? onAttachmentsChanged;
+
+
   const FormRenderer({
     Key? key,
     required this.form,
@@ -34,6 +45,7 @@ class FormRenderer extends StatefulWidget {
     this.onError,
     this.initialData,
     this.isSubmitting = false,
+    this.onAttachmentsChanged,
   }) : super(key: key);
 
   @override
@@ -42,6 +54,7 @@ class FormRenderer extends StatefulWidget {
 
 class _FormRendererState extends State<FormRenderer> {
   late Map<String, dynamic> _formData;
+  late Map<String, List<FileData>> _attachments;
   bool _isSubmitting = false;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
@@ -51,6 +64,7 @@ class _FormRendererState extends State<FormRenderer> {
     _formData = widget.initialData != null
         ? Map<String, dynamic>.from(widget.initialData!)
         : {};
+    _attachments = {};
   }
 
   @override
@@ -70,6 +84,17 @@ class _FormRendererState extends State<FormRenderer> {
     widget.onChanged?.call(_formData);
   }
 
+  void _updateAttachment(String key, List<FileData> files) {
+    setState(() {
+      if (files.isEmpty) {
+        _attachments.remove(key);
+      } else {
+        _attachments[key] = files;
+      }
+    });
+    widget.onAttachmentsChanged?.call(_attachments);
+  }
+
   bool _validateForm() {
     // Use Flutter's built-in form validation
     return _formKey.currentState?.validate() ?? false;
@@ -81,8 +106,7 @@ class _FormRendererState extends State<FormRenderer> {
 
     setState(() => _isSubmitting = true);
 
-    try {
-      widget.onSubmit?.call(_formData);
+    try { widget.onSubmit?.call(_formData);
     } catch (e) {
       final error = e is ApiException ? e.message : 'Unknown error';
       widget.onError?.call(error);
@@ -125,9 +149,15 @@ class _FormRendererState extends State<FormRenderer> {
 
     final fieldWidget = ComponentFactory.build(
       component: component,
-      value: _formData[component.key],
+      // For file components, get value from _attachments instead of _formData
+      value: component.type == 'file'
+          ? _attachments[component.key] ?? []
+          : _formData[component.key],
       onChanged: (value) {
         _updateField(component.key, value);
+      },
+      onFileChanged: (key, files) {
+        _updateAttachment(key, files);
       },
       fieldNumber: fieldNumber,
     );
