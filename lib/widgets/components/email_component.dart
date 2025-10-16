@@ -42,8 +42,17 @@ class EmailComponent extends StatelessWidget {
   /// Retrieves the tooltip text if available in the raw JSON.
   String? get _tooltip => component.raw['tooltip'];
 
-  /// Regular expression for basic email validation.
-  static final _emailRegex = RegExp(r'^[\w\.\-]+@([\w\-]+\.)+[a-zA-Z]{2,}$');
+  /// Regular expression for comprehensive email validation.
+  /// Supports most common email formats including:
+  /// - Standard emails: user@example.com
+  /// - Emails with dots: first.last@example.com
+  /// - Emails with plus: user+tag@example.com
+  /// - Emails with hyphens: user-name@example.com
+  /// - Subdomains: user@mail.example.com
+  static final _emailRegex = RegExp(
+    r"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$",
+    caseSensitive: false,
+  );
 
   /// Validates required and format constraints.
   String? _validator(String? input) {

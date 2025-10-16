@@ -53,54 +53,69 @@ class RadioComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final error = _validator();
     final hasValue = value != null && value.toString().isNotEmpty;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FieldLabel(
-          label: component.label,
-          isRequired: _isRequired,
-          showClearButton: true,
-          hasContent: hasValue,
-          onClear: () => onChanged(null),
-          number: fieldNumber,
-          description: _description,
-          tooltip: _tooltip,
-        ),
-        ..._values.map((option) {
-          final optionLabel = option['label'] ?? '';
-          final optionValue = option['value'];
-
-          return RadioListTile(
-            dense: true,
-            visualDensity: VisualDensity(
-              horizontal: -4,
-              vertical: -4,
+    return FormField<dynamic>(
+      initialValue: value,
+      validator: (_) {
+        if (_isRequired && (value == null || value.toString().isEmpty)) {
+          return '${component.label} is required.';
+        }
+        return null;
+      },
+      builder: (FormFieldState<dynamic> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FieldLabel(
+              label: component.label,
+              isRequired: _isRequired,
+              showClearButton: true,
+              hasContent: hasValue,
+              onClear: () {
+                onChanged(null);
+                field.didChange(null);
+              },
+              number: fieldNumber,
+              description: _description,
+              tooltip: _tooltip,
             ),
-            key: ValueKey('${component.key}_$optionValue'), // Ensure rebuild
-            value: optionValue,
-            groupValue: value,
-            title: Text(optionLabel.toString()),
-            onChanged: (dynamic newValue) {
-              onChanged(newValue);
-            },
-            contentPadding: EdgeInsets.zero,
-          );
-        }),
-        // if (error != null)
-        //   Padding(
-        //     padding: const EdgeInsets.only(left: 12, top: 4),
-        //     child: Text(
-        //       error,
-        //       style: TextStyle(
-        //         color: Theme.of(context).colorScheme.error,
-        //         fontSize: 12,
-        //       ),
-        //     ),
-        //   ),
-      ],
+            ..._values.map((option) {
+              final optionLabel = option['label'] ?? '';
+              final optionValue = option['value'];
+
+              return RadioListTile(
+                dense: true,
+                visualDensity: VisualDensity(
+                  horizontal: -4,
+                  vertical: -4,
+                ),
+                key:
+                    ValueKey('${component.key}_$optionValue'), // Ensure rebuild
+                value: optionValue,
+                groupValue: value,
+                title: Text(optionLabel.toString()),
+                onChanged: (dynamic newValue) {
+                  onChanged(newValue);
+                  field.didChange(newValue);
+                },
+                contentPadding: EdgeInsets.zero,
+              );
+            }),
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(left: 12, top: 4),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

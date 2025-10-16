@@ -41,6 +41,31 @@ class TextFieldComponent extends StatelessWidget {
   /// Retrieves the tooltip text if available in the raw JSON.
   String? get _tooltip => component.raw['tooltip'];
 
+  /// Regular expression for URL validation.
+  static final _urlRegex = RegExp(
+    r'^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$',
+    caseSensitive: false,
+  );
+
+  /// Validates the input based on component type and requirements.
+  String? _validator(String? input) {
+    final text = (input ?? '').trim();
+
+    // Check if required
+    if (_isRequired && text.isEmpty) {
+      return '${component.label} is required.';
+    }
+
+    // Validate URL format if component type is 'url'
+    if (text.isNotEmpty && component.type == 'url') {
+      if (!_urlRegex.hasMatch(text)) {
+        return 'Please enter a valid URL (e.g., https://example.com)';
+      }
+    }
+
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentValue = value ?? component.defaultValue?.toString() ?? '';
@@ -64,14 +89,13 @@ class TextFieldComponent extends StatelessWidget {
           initialValue: currentValue,
           decoration: InputDecorationUtils.createDecoration(
             context,
-            hintText: _placeholder,
+            hintText: _placeholder ??
+                (component.type == 'url' ? 'https://example.com' : null),
           ),
+          keyboardType:
+              component.type == 'url' ? TextInputType.url : TextInputType.text,
           onChanged: onChanged,
-          validator: _isRequired
-              ? (val) => (val == null || val.isEmpty)
-                  ? '${component.label} is required.'
-                  : null
-              : null,
+          validator: _validator,
         ),
       ],
     );

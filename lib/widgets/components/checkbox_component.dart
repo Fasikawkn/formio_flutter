@@ -47,43 +47,69 @@ class CheckboxComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
+    return FormField<bool>(
+      initialValue: value,
+      validator: (_) {
+        if (_isRequired && !value) {
+          return '${component.label} is required.';
+        }
+        return null;
+      },
+      builder: (FormFieldState<bool> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Checkbox(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(4),
-              ),
-              value: value,
-              onChanged: (val) {
-                if (val != null) {
-                  onChanged(val);
-                }
-              },
-              visualDensity: VisualDensity(
-                horizontal: -4,
-                vertical: -4,
-              ),
+            Row(
+              children: [
+                Checkbox(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  value: value,
+                  onChanged: (val) {
+                    if (val != null) {
+                      onChanged(val);
+                      field.didChange(val);
+                    }
+                  },
+                  visualDensity: VisualDensity(
+                    horizontal: -4,
+                    vertical: -4,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: FieldLabel(
+                    label: component.label,
+                    isRequired: _isRequired,
+                    showClearButton: true,
+                    hasContent: value,
+                    onClear: () {
+                      onChanged(false);
+                      field.didChange(false);
+                    },
+                    number: fieldNumber,
+                    description: _description,
+                    tooltip: _tooltip,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: FieldLabel(
-                label: component.label,
-                isRequired: _isRequired,
-                showClearButton: true,
-                hasContent: value,
-                onClear: () => onChanged(false),
-                number: fieldNumber,
-                description: _description,
-                tooltip: _tooltip,
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 8, left: 12),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
               ),
-            ),
           ],
-        ),
-      ],
+        );
+      },
     );
   }
 }

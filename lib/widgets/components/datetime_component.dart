@@ -156,7 +156,6 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
   @override
   Widget build(BuildContext context) {
     final hasContent = widget.value != null;
-    // final errorText = _validator(_controller.text);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,6 +189,12 @@ class _DateTimeComponentState extends State<DateTimeComponent> {
             ),
           ),
           onTap: () => _handlePick(context),
+          validator: (value) {
+            if (_isRequired && (value == null || value.isEmpty)) {
+              return '${widget.component.label} is required.';
+            }
+            return null;
+          },
         ),
       ],
     );

@@ -84,44 +84,58 @@ class _TimeComponentState extends State<TimeComponent> {
   Widget build(BuildContext context) {
     final displayText =
         _selectedTime != null ? _selectedTime!.format(context) : '';
-    // final error = _validator();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FieldLabel(
-          label: widget.component.label,
-          isRequired: _isRequired,
-          showClearButton: true,
-          hasContent: _selectedTime != null,
-          onClear: () {
-            setState(() => _selectedTime = null);
-            widget.onChanged(null);
-          },
-          number: widget.fieldNumber,
-          description: _description,
-          tooltip: _tooltip,
-        ),
-        InkWell(
-          onTap: _pickTime,
-          child: InputDecorator(
-            decoration: InputDecorationUtils.createDecoration(
-              context,
-              suffixIcon: const Icon(Icons.access_time),
+    return FormField<String>(
+      initialValue: widget.value,
+      validator: (_) {
+        if (_isRequired && _selectedTime == null) {
+          return '${widget.component.label} is required.';
+        }
+        return null;
+      },
+      builder: (FormFieldState<String> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FieldLabel(
+              label: widget.component.label,
+              isRequired: _isRequired,
+              showClearButton: true,
+              hasContent: _selectedTime != null,
+              onClear: () {
+                setState(() => _selectedTime = null);
+                widget.onChanged(null);
+                field.didChange(null);
+              },
+              number: widget.fieldNumber,
+              description: _description,
+              tooltip: _tooltip,
             ),
-            child: Text(
-              displayText.isEmpty
-                  ? ' ${_placeholder?.isEmpty ?? true ? '12:00' : _placeholder} '
-                  : displayText,
-              style: displayText.isEmpty
-                  ? TextStyle(
-                      color: Theme.of(context).hintColor.withValues(alpha: 0.6))
-                  : Theme.of(context).textTheme.bodyMedium,
+            InkWell(
+              onTap: _pickTime,
+              child: InputDecorator(
+                decoration: InputDecorationUtils.createDecoration(
+                  context,
+                  suffixIcon: const Icon(Icons.access_time),
+                  errorText: field.errorText,
+                ),
+                child: Text(
+                  displayText.isEmpty
+                      ? ' ${_placeholder?.isEmpty ?? true ? '12:00' : _placeholder} '
+                      : displayText,
+                  style: displayText.isEmpty
+                      ? TextStyle(
+                          color: Theme.of(context)
+                              .hintColor
+                              .withValues(alpha: 0.6))
+                      : Theme.of(context).textTheme.bodyMedium,
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

@@ -42,8 +42,8 @@ class FormRenderer extends StatefulWidget {
 
 class _FormRendererState extends State<FormRenderer> {
   late Map<String, dynamic> _formData;
-  final Map<String, String?> _errors = {};
   bool _isSubmitting = false;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -71,26 +71,8 @@ class _FormRendererState extends State<FormRenderer> {
   }
 
   bool _validateForm() {
-    bool isValid = true;
-    _errors.clear();
-
-    for (final component in widget.form.components) {
-      if (_shouldShowComponent(component) && component.required) {
-        final value = _formData[component.key];
-        final isEmpty = value == null ||
-            (value is String && value.trim().isEmpty) ||
-            (value is Map && value.isEmpty) ||
-            (value is List && value.isEmpty);
-
-        if (isEmpty) {
-          _errors[component.key] = '${component.label} is required.';
-          isValid = false;
-        }
-      }
-    }
-
-    setState(() {});
-    return isValid;
+    // Use Flutter's built-in form validation
+    return _formKey.currentState?.validate() ?? false;
   }
 
   Future<void> _handleSubmit() async {
@@ -139,38 +121,18 @@ class _FormRendererState extends State<FormRenderer> {
         (component.raw['action'] == 'submit' ||
             component.raw['action'] == null)) {
       return SizedBox.shrink();
-      
     }
 
     final fieldWidget = ComponentFactory.build(
       component: component,
       value: _formData[component.key],
-      onChanged: (value){
+      onChanged: (value) {
         _updateField(component.key, value);
       },
       fieldNumber: fieldNumber,
     );
 
-    final errorText = _errors[component.key];
-
-    return Column(
-      key: ValueKey('${component.key}_${component.type}'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        fieldWidget,
-        if (errorText != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 4, left: 4),
-            child: Text(
-              errorText,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.error,
-                fontSize: 12,
-              ),
-            ),
-          ),
-      ],
-    );
+    return fieldWidget;
   }
 
   @override
@@ -189,32 +151,35 @@ class _FormRendererState extends State<FormRenderer> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                ...widget.form.components.map((component) {
-                  // Skip hidden components
-                  if (!_shouldShowComponent(component)) {
-                    return const SizedBox.shrink();
-                  }
+          child: Form(
+            key: _formKey,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ...widget.form.components.map((component) {
+                    // Skip hidden components
+                    if (!_shouldShowComponent(component)) {
+                      return const SizedBox.shrink();
+                    }
 
-                  final fieldNum = componentNumbers[component.key];
+                    final fieldNum = componentNumbers[component.key];
 
-                  return Padding(
-                    key: ValueKey(
-                        'component_${component.key}_${component.type}'),
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: _buildComponent(component, fieldNumber: fieldNum),
-                  );
-                }).toList(),
-              ],
+                    return Padding(
+                      key: ValueKey(
+                          'component_${component.key}_${component.type}'),
+                      padding: const EdgeInsets.only(bottom: 20),
+                      child: _buildComponent(component, fieldNumber: fieldNum),
+                    );
+                  }).toList(),
+                ],
+              ),
             ),
           ),
         ),
         Container(
-          margin: const EdgeInsets.symmetric(vertical: 20,horizontal: 10),
+          margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
           width: double.infinity,
           child: ElevatedButton(
             style: ElevatedButton.styleFrom(

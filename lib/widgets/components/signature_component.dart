@@ -95,49 +95,52 @@ class _SignatureComponentState extends State<SignatureComponent> {
   @override
   Widget build(BuildContext context) {
     final hasContent = widget.value != null && _controller.isNotEmpty;
-    // final error = _validator();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FieldLabel(
-          label: widget.component.label,
-          isRequired: _isRequired,
-          showClearButton: true,
-          hasContent: hasContent,
-          onClear: _clear,
-          number: widget.fieldNumber,
-          description: _description,
-          tooltip: _tooltip,
-        ),
-        InputDecorator(
-          decoration: InputDecorationUtils.createDecoration(
-            context,
-          ),
-          child: Container(
-            height: 160,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(7),
-              child: Signature(
-                controller: _controller,
-                backgroundColor: Colors.white,
+    return FormField<String>(
+      initialValue: widget.value,
+      validator: (_) {
+        if (_isRequired && (widget.value == null || _controller.isEmpty)) {
+          return '${widget.component.label} is required.';
+        }
+        return null;
+      },
+      builder: (FormFieldState<String> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FieldLabel(
+              label: widget.component.label,
+              isRequired: _isRequired,
+              showClearButton: true,
+              hasContent: hasContent,
+              onClear: () {
+                _clear();
+                field.didChange(null);
+              },
+              number: widget.fieldNumber,
+              description: _description,
+              tooltip: _tooltip,
+            ),
+            InputDecorator(
+              decoration: InputDecorationUtils.createDecoration(
+                context,
+                errorText: field.errorText,
+              ),
+              child: Container(
+                height: 160,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(7),
+                  child: Signature(
+                    controller: _controller,
+                    backgroundColor: Colors.white,
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
-        // if (error != null)
-        //   Padding(
-        //     padding: const EdgeInsets.only(top: 6),
-        //     child: Text(
-        //       error,
-        //       style: TextStyle(
-        //         color: Theme.of(context).colorScheme.error,
-        //         fontSize: 12,
-        //       ),
-        //     ),
-        //   ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

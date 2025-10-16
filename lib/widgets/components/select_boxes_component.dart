@@ -65,49 +65,78 @@ class SelectBoxesComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasValue = value.values.any((v) => v == true);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FieldLabel(
-          label: component.label,
-          isRequired: _isRequired,
-          showClearButton: true,
-          hasContent: hasValue,
-          onClear: () {
-            final clearedState = Map<String, bool>.from(value);
-            clearedState.updateAll((key, value) => false);
-            onChanged(clearedState);
-          },
-          number: fieldNumber,
-          description: _description,
-          tooltip: _tooltip,
-        ),
-        ..._values.map((option) {
-          final key = option['value']?.toString() ?? '';
-          final label = option['label']?.toString() ?? '';
-          final checked = value[key] ?? false;
+    return FormField<Map<String, bool>>(
+      initialValue: value,
+      validator: (_) {
+        if (_isRequired) {
+          final hasAnyChecked = value.values.any((v) => v == true);
+          if (!hasAnyChecked) {
+            return '${component.label} is required.';
+          }
+        }
+        return null;
+      },
+      builder: (FormFieldState<Map<String, bool>> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FieldLabel(
+              label: component.label,
+              isRequired: _isRequired,
+              showClearButton: true,
+              hasContent: hasValue,
+              onClear: () {
+                final clearedState = Map<String, bool>.from(value);
+                clearedState.updateAll((key, value) => false);
+                onChanged(clearedState);
+                field.didChange(clearedState);
+              },
+              number: fieldNumber,
+              description: _description,
+              tooltip: _tooltip,
+            ),
+            ..._values.map((option) {
+              final key = option['value']?.toString() ?? '';
+              final label = option['label']?.toString() ?? '';
+              final checked = value[key] ?? false;
 
-          return CheckboxListTile(
-            dense: true,
-            checkboxShape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-            visualDensity: VisualDensity(
-              horizontal: -4,
-              vertical: -4,
-            ),
-            value: checked,
-            title: Text(label),
-            onChanged: (val) {
-              if (val != null) {
-                _toggle(key, val);
-              }
-            },
-            contentPadding: EdgeInsets.zero,
-            controlAffinity: ListTileControlAffinity.leading,
-          );
-        }),
-      ],
+              return CheckboxListTile(
+                dense: true,
+                checkboxShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                visualDensity: VisualDensity(
+                  horizontal: -4,
+                  vertical: -4,
+                ),
+                value: checked,
+                title: Text(label),
+                onChanged: (val) {
+                  if (val != null) {
+                    _toggle(key, val);
+                    final newState = Map<String, bool>.from(value);
+                    newState[key] = val;
+                    field.didChange(newState);
+                  }
+                },
+                contentPadding: EdgeInsets.zero,
+                controlAffinity: ListTileControlAffinity.leading,
+              );
+            }),
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 8, left: 12),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
     );
   }
 }

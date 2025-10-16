@@ -58,60 +58,75 @@ class SelectComponent extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasValue = value != null && value.toString().isNotEmpty;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FieldLabel(
-          label: component.label,
-          isRequired: _isRequired,
-          showClearButton: true,
-          hasContent: hasValue,
-          onClear: () {
-            onChanged(null);
-          },
-          number: fieldNumber,
-          description: _description,
-          tooltip: _tooltip,
-        ),
-        InputDecorator(
-          key: ValueKey(
-              component.key), // ensure proper rebuild when visibility toggles
-          decoration: InputDecorationUtils.createDropdownDecoration(
-            context,
-            hintText: _placeholder ?? 'Select an option...',
-            // errorText: error,
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<dynamic>(
-              isExpanded: true,
-              isDense: true,
-              hint: Text(
-                _placeholder ?? 'Select an option...',
-                style: TextStyle(
-                  color: Theme.of(context).hintColor.withValues(alpha: 0.6),
-                  fontSize: 14,
+    return FormField<dynamic>(
+      initialValue: value,
+      validator: (_) {
+        if (_isRequired && (value == null || value.toString().isEmpty)) {
+          return '${component.label} is required.';
+        }
+        return null;
+      },
+      builder: (FormFieldState<dynamic> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FieldLabel(
+              label: component.label,
+              isRequired: _isRequired,
+              showClearButton: true,
+              hasContent: hasValue,
+              onClear: () {
+                onChanged(null);
+                field.didChange(null);
+              },
+              number: fieldNumber,
+              description: _description,
+              tooltip: _tooltip,
+            ),
+            InputDecorator(
+              key: ValueKey(component
+                  .key), // ensure proper rebuild when visibility toggles
+              decoration: InputDecorationUtils.createDropdownDecoration(
+                context,
+                hintText: _placeholder ?? 'Select an option...',
+                errorText: field.errorText,
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<dynamic>(
+                  isExpanded: true,
+                  isDense: true,
+                  hint: Text(
+                    _placeholder ?? 'Select an option...',
+                    style: TextStyle(
+                      color: Theme.of(context).hintColor.withValues(alpha: 0.6),
+                      fontSize: 14,
+                    ),
+                  ),
+                  value: value,
+                  onChanged: (newValue) {
+                    onChanged(newValue);
+                    field.didChange(newValue);
+                  },
+                  icon: const SizedBox
+                      .shrink(), // Hide default icon since we have it in decoration
+                  items: _values.map((option) {
+                    final label = option['label']?.toString() ?? '';
+                    final val = option['value'];
+                    return DropdownMenuItem<dynamic>(
+                      value: val,
+                      child: Text(
+                        label,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    );
+                  }).toList(),
                 ),
               ),
-              value: value,
-              onChanged: onChanged,
-              icon: const SizedBox
-                  .shrink(), // Hide default icon since we have it in decoration
-              items: _values.map((option) {
-                final label = option['label']?.toString() ?? '';
-                final val = option['value'];
-                return DropdownMenuItem<dynamic>(
-                  value: val,
-                  child: Text(
-                    label,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                );
-              }).toList(),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }

@@ -44,7 +44,8 @@ class _DayComponentState extends State<DayComponent> {
 
   int get _startYear => widget.component.raw['fields']?['year']?['min'] ?? 1900;
   int get _endYear =>
-      widget.component.raw['fields']?['year']?['max'] ?? DateTime.now().year + 10;
+      widget.component.raw['fields']?['year']?['max'] ??
+      DateTime.now().year + 10;
 
   /// Retrieves the description text if available in the raw JSON.
   String? get _description => widget.component.raw['description'];
@@ -85,113 +86,127 @@ class _DayComponentState extends State<DayComponent> {
   @override
   Widget build(BuildContext context) {
     final hasContent = _day != null || _month != null || _year != null;
-    // final error = _validator();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FieldLabel(
-          label: widget.component.label,
-          isRequired: _isRequired,
-          showClearButton: true,
-          hasContent: hasContent,
-          onClear: () {
-            setState(() {
-              _day = null;
-              _month = null;
-              _year = null;
-            });
-            _updateValue();
-          },
-          number: widget.fieldNumber,
-          description: _description,
-          tooltip: _tooltip,
-        ),
-        Row(
+    return FormField<String>(
+      initialValue: widget.value,
+      validator: (_) {
+        if (_isRequired && (_day == null || _month == null || _year == null)) {
+          return '${widget.component.label} is required.';
+        }
+        return null;
+      },
+      builder: (FormFieldState<String> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
-            // Day
-            Flexible(
-              child: DropdownButtonFormField<int>(
-                value: _day,
-                alignment: Alignment.center,
-                icon: SizedBox.shrink(),
-                style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
-                decoration: InputDecorationUtils.createDropdownDecoration(
-                  context,
-                  hintText: 'Day',
-                ),
-                items: List.generate(31, (i) => i + 1)
-                    .map((d) =>
-                        DropdownMenuItem(value: d, child: Text(d.toString())))
-                    .toList(),
-                onChanged: (val) {
-                  setState(() => _day = val);
-                  _updateValue();
-                },
-              ),
+            FieldLabel(
+              label: widget.component.label,
+              isRequired: _isRequired,
+              showClearButton: true,
+              hasContent: hasContent,
+              onClear: () {
+                setState(() {
+                  _day = null;
+                  _month = null;
+                  _year = null;
+                });
+                _updateValue();
+                field.didChange(null);
+              },
+              number: widget.fieldNumber,
+              description: _description,
+              tooltip: _tooltip,
             ),
-            const SizedBox(width: 8),
+            Row(
+              children: [
+                // Day
+                Flexible(
+                  child: DropdownButtonFormField<int>(
+                    value: _day,
+                    alignment: Alignment.center,
+                    icon: SizedBox.shrink(),
+                    style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
+                    decoration: InputDecorationUtils.createDropdownDecoration(
+                      context,
+                      hintText: 'Day',
+                    ),
+                    items: List.generate(31, (i) => i + 1)
+                        .map((d) => DropdownMenuItem(
+                            value: d, child: Text(d.toString())))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() => _day = val);
+                      _updateValue();
+                      field.didChange(widget.value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
 
-            // Month
-            Flexible(
-              child: DropdownButtonFormField<int>(
-                value: _month,
-                alignment: Alignment.center,
-                icon: SizedBox.shrink(),
-                style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
-                decoration: InputDecorationUtils.createDropdownDecoration(
-                  context,
-                  hintText: 'Month',
+                // Month
+                Flexible(
+                  child: DropdownButtonFormField<int>(
+                    value: _month,
+                    alignment: Alignment.center,
+                    icon: SizedBox.shrink(),
+                    style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
+                    decoration: InputDecorationUtils.createDropdownDecoration(
+                      context,
+                      hintText: 'Month',
+                    ),
+                    items: List.generate(12, (i) => i + 1)
+                        .map((m) => DropdownMenuItem(
+                            value: m, child: Text(m.toString())))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() => _month = val);
+                      _updateValue();
+                      field.didChange(widget.value);
+                    },
+                  ),
                 ),
-                items: List.generate(12, (i) => i + 1)
-                    .map((m) =>
-                        DropdownMenuItem(value: m, child: Text(m.toString())))
-                    .toList(),
-                onChanged: (val) {
-                  setState(() => _month = val);
-                  _updateValue();
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
+                const SizedBox(width: 8),
 
-            // Year
-            Flexible(
-              child: DropdownButtonFormField<int>(
-                value: _year,
-                alignment: Alignment.center,
-                icon: SizedBox.shrink(),
-                style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
-                decoration: InputDecorationUtils.createDropdownDecoration(
-                  context,
-                  hintText: 'Year',
+                // Year
+                Flexible(
+                  child: DropdownButtonFormField<int>(
+                    value: _year,
+                    alignment: Alignment.center,
+                    icon: SizedBox.shrink(),
+                    style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
+                    decoration: InputDecorationUtils.createDropdownDecoration(
+                      context,
+                      hintText: 'Year',
+                    ),
+                    items: List.generate(
+                            _endYear - _startYear + 1, (i) => _endYear - i)
+                        .map((y) => DropdownMenuItem(
+                            value: y, child: Text(y.toString())))
+                        .toList(),
+                    onChanged: (val) {
+                      setState(() => _year = val);
+                      _updateValue();
+                      field.didChange(widget.value);
+                    },
+                  ),
                 ),
-                items: List.generate(
-                        _endYear - _startYear + 1, (i) => _endYear - i)
-                    .map((y) =>
-                        DropdownMenuItem(value: y, child: Text(y.toString())))
-                    .toList(),
-                onChanged: (val) {
-                  setState(() => _year = val);
-                  _updateValue();
-                },
-              ),
+              ],
             ),
+            if (field.hasError)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  field.errorText!,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
           ],
-        ),
-        // if (error != null)
-        //   Padding(
-        //     padding: const EdgeInsets.only(top: 6),
-        //     child: Text(
-        //       error,
-        //       style: TextStyle(
-        //         color: Theme.of(context).colorScheme.error,
-        //         fontSize: 12,
-        //       ),
-        //     ),
-        //   ),
-      ],
+        );
+      },
     );
   }
 }

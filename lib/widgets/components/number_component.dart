@@ -4,6 +4,7 @@
 /// and basic numeric constraints (min, max).
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/component.dart';
 import '../shared/field_label.dart';
@@ -34,10 +35,12 @@ class NumberComponent extends StatelessWidget {
   bool get _isRequired => component.required;
 
   /// The minimum allowed value (if defined).
-  num? get _min => component.raw['validate']?['min'];
+  num? get _min =>
+      num.tryParse(component.raw['validate']?['min']?.toString() ?? '');
 
   /// The maximum allowed value (if defined).
-  num? get _max => component.raw['validate']?['max'];
+  num? get _max =>
+      num.tryParse(component.raw['validate']?['max']?.toString() ?? '');
 
   /// Returns placeholder text, if available.
   String? get _placeholder => component.raw['placeholder'];
@@ -71,7 +74,7 @@ class NumberComponent extends StatelessWidget {
         return '${component.label} must be at most $_max.';
       }
     }
-
+    print(parsed);
     return null;
   }
 
@@ -101,6 +104,10 @@ class NumberComponent extends StatelessWidget {
             context,
             hintText: _placeholder,
           ),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*$')),
+          ],
           keyboardType: TextInputType.number,
           onChanged: (input) => onChanged(_parse(input)),
           validator: _validator,

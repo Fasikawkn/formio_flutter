@@ -37,11 +37,13 @@ class CurrencyComponent extends StatelessWidget {
   /// Placeholder text shown when the field is empty.
   String? get _placeholder => component.raw['placeholder'];
 
-  /// Minimum allowed currency value.
-  num? get _min => component.raw['validate']?['min'];
+  /// The minimum allowed value (if defined).
+  num? get _min =>
+      num.tryParse(component.raw['validate']?['min']?.toString() ?? '');
 
-  /// Maximum allowed currency value.
-  num? get _max => component.raw['validate']?['max'];
+  /// The maximum allowed value (if defined).
+  num? get _max =>
+      num.tryParse(component.raw['validate']?['max']?.toString() ?? '');
 
   /// Currency symbol (default: $).
   String get _currencySymbol => component.raw['currency'] ?? '\$';

@@ -36,7 +36,9 @@ class PhoneNumberComponent extends StatelessWidget {
   bool get _isRequired => component.required;
 
   /// Optional placeholder for the input field.
-  String? get _placeholder => component.raw['placeholder'];
+  String? get _placeholder => component.raw['placeholder'].toString().isEmpty
+      ? null
+      : component.raw['placeholder'];
 
   /// Retrieves the description text if available in the raw JSON.
   String? get _description => component.raw['description'];
@@ -84,8 +86,7 @@ class PhoneNumberComponent extends StatelessWidget {
           initialValue: currentValue,
           decoration: InputDecorationUtils.createDecoration(
             context,
-            hintText: _placeholder ?? '+1 (555) 123-4567',
-            suffixIcon: const Icon(Icons.phone),
+            hintText: _placeholder ?? '(555) 123-4567',
           ),
           keyboardType: TextInputType.phone,
           onChanged: onChanged,

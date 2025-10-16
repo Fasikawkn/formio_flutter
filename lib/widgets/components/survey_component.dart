@@ -61,117 +61,136 @@ class SurveyComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final error = _validator();
     final theme = Theme.of(context);
     final description = component.raw['description']?.toString();
     final tooltip = component.raw['tooltip']?.toString();
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Use FieldLabel for consistent styling
-        FieldLabel(
-          label: component.label,
-          isRequired: _isRequired,
-          description: description,
-          tooltip: tooltip,
-        ),
-        const SizedBox(height: 8),
+    return FormField<Map<String, String>>(
+      initialValue: value,
+      validator: (_) {
+        if (_isRequired) {
+          final answered =
+              value.entries.where((e) => e.value.isNotEmpty).length;
+          if (answered < _rows.length) {
+            return 'Please complete all survey questions.';
+          }
+        }
+        return null;
+      },
+      builder: (FormFieldState<Map<String, String>> field) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Use FieldLabel for consistent styling
+            FieldLabel(
+              label: component.label,
+              isRequired: _isRequired,
+              description: description,
+              tooltip: tooltip,
+            ),
+            const SizedBox(height: 8),
 
-        // Modern card-style container for the table
-        InputDecorator(
-          decoration: InputDecorationUtils.createDecoration(
-            context,
-          ).copyWith(
-            contentPadding: EdgeInsets.zero,
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Table(
-              columnWidths: const {0: FlexColumnWidth(2)},
-              border: TableBorder(
-                horizontalInside: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-                verticalInside: BorderSide(
-                  color: Colors.grey.withValues(alpha: 0.2),
-                  width: 1,
-                ),
+            // Modern card-style container for the table
+            InputDecorator(
+              decoration: InputDecorationUtils.createDecoration(
+                context,
+                errorText: field.errorText,
+              ).copyWith(
+                contentPadding: EdgeInsets.zero,
               ),
-              children: [
-                // Header Row with modern styling
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: theme.primaryColor.withValues(alpha: 0.05),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Table(
+                  columnWidths: const {0: FlexColumnWidth(2)},
+                  border: TableBorder(
+                    horizontalInside: BorderSide(
+                      color: Colors.grey.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                    verticalInside: BorderSide(
+                      color: Colors.grey.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
                   ),
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.all(12.0),
-                      child: Text(''),
+                    // Header Row with modern styling
+                    TableRow(
+                      decoration: BoxDecoration(
+                        color: theme.primaryColor.withValues(alpha: 0.05),
+                      ),
+                      children: [
+                        const Padding(
+                          padding: EdgeInsets.all(12.0),
+                          child: Text(''),
+                        ),
+                        ..._columns.map((col) => Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: Text(
+                                col['label'] ?? '',
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.onSurface,
+                                ),
+                              ),
+                            )),
+                      ],
                     ),
-                    ..._columns.map((col) => Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Text(
-                            col['label'] ?? '',
-                            textAlign: TextAlign.center,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: theme.colorScheme.onSurface,
+                    // Question Rows with modern styling
+                    ..._rows.asMap().entries.map((entry) {
+                      final index = entry.key;
+                      final row = entry.value;
+                      final rowKey = row['value'] ?? '';
+                      final isEven = index % 2 == 0;
+
+                      return TableRow(
+                        decoration: BoxDecoration(
+                          color: isEven
+                              ? Colors.transparent
+                              : Colors.grey.withValues(alpha: 0.03),
+                        ),
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Text(
+                              row['label'] ?? '',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                              ),
                             ),
                           ),
-                        )),
+                          ..._columns.map((col) {
+                            final colValue = col['value']?.toString() ?? '';
+
+                            return Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              child: Center(
+                                child: Radio<String>(
+                                  groupValue: _selectedFor(rowKey),
+                                  value: colValue,
+                                  activeColor: theme.primaryColor,
+                                  onChanged: (val) {
+                                    if (val != null) {
+                                      _update(rowKey, val);
+                                      field.didChange(value);
+                                    }
+                                  },
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              ),
+                            );
+                          }),
+                        ],
+                      );
+                    }),
                   ],
                 ),
-                // Question Rows with modern styling
-                ..._rows.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final row = entry.value;
-                  final rowKey = row['value'] ?? '';
-                  final isEven = index % 2 == 0;
-
-                  return TableRow(
-                    decoration: BoxDecoration(
-                      color: isEven
-                          ? Colors.transparent
-                          : Colors.grey.withValues(alpha: 0.03),
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Text(
-                          row['label'] ?? '',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      ..._columns.map((col) {
-                        final colValue = col['value']?.toString() ?? '';
-
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Center(
-                            child: Radio<String>(
-                              groupValue: _selectedFor(rowKey),
-                              value: colValue,
-                              activeColor: theme.primaryColor,
-                              onChanged: (val) {
-                                if (val != null) _update(rowKey, val);
-                              },
-                              visualDensity: VisualDensity.compact,
-                            ),
-                          ),
-                        );
-                      }),
-                    ],
-                  );
-                }),
-              ],
+              ),
             ),
-          ),
-        ),
-      ],
+          ],
+        );
+      },
     );
   }
 }
