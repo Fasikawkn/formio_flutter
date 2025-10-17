@@ -52,7 +52,8 @@ class ColumnsComponent extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: EdgeInsets.only(bottom: 25),
         child: SizedBox(
-          width: MediaQuery.of(context).size.width * (columnLength * 0.8),
+          width: MediaQuery.of(context).size.width *
+              (columnLength > 1 ? columnLength * 0.6 : 1.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
@@ -67,7 +68,7 @@ class ColumnsComponent extends StatelessWidget {
                         .map(
                           (comp) => Padding(
                             padding:
-                                const EdgeInsets.only(right: 20, bottom: 20),
+                                const EdgeInsets.only(right: 30, bottom: 20),
                             child: ComponentFactory.build(
                                 component: comp,
                                 value: value[comp.key],
