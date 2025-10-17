@@ -50,6 +50,7 @@ import 'components/time_component.dart';
 
 typedef OnComponentChanged = void Function(dynamic value);
 typedef OnFileChanged = void Function(String key, List<FileData> files);
+typedef OnButtonPressed = void Function(String action);
 
 class ComponentFactory {
   /// Creates the appropriate widget for a given component.
@@ -58,6 +59,7 @@ class ComponentFactory {
     dynamic value,
     required OnComponentChanged onChanged,
     OnFileChanged? onFileChanged,
+    OnButtonPressed? onPressed,
     int? fieldNumber,
   }) {
     if (component.conditional != null) {
@@ -127,7 +129,9 @@ class ComponentFactory {
             onChanged: onChanged);
       case 'button':
         return ButtonComponent(
-            component: component, onPressed: () {}, isDisabled: false);
+            component: component,
+            onPressed: onPressed ?? (_) {},
+            isDisabled: false);
 
       // Advanced
       case 'datetime':
@@ -159,7 +163,8 @@ class ComponentFactory {
         return ContainerComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+            onChanged: onChanged,
+            onPressed: onPressed);
       // case 'datamap':
       //   return DataMapComponent(
       //       component: component,
@@ -169,7 +174,8 @@ class ComponentFactory {
         return DataGridComponent(
             component: component,
             value: value is List<Map<String, dynamic>> ? value : [],
-            onChanged: onChanged);
+            onChanged: onChanged,
+            onPressed: onPressed);
       // case 'editgrid':
       //   return EditGridComponent(
       //       component: component,
@@ -181,12 +187,14 @@ class ComponentFactory {
         return PanelComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+            onChanged: onChanged,
+            onPressed: onPressed);
       case 'columns':
         return ColumnsComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+            onChanged: onChanged,
+            onPressed: onPressed);
       // case 'htmlelement':
       //   return HtmlElementComponent(component: component);
       // case 'content':
@@ -195,17 +203,20 @@ class ComponentFactory {
         return FieldSetComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+            onChanged: onChanged,
+            onPressed: onPressed);
       case 'table':
         return TableComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+            onChanged: onChanged,
+            onPressed: onPressed);
       case 'tabs':
         return TabsComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
-            onChanged: onChanged);
+            onChanged: onChanged,
+            onPressed: onPressed);
       // case 'well':
       //   return WellComponent(
       //       component: component,

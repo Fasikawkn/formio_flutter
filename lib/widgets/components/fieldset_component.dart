@@ -18,7 +18,16 @@ class FieldSetComponent extends StatelessWidget {
   /// Callback triggered when a nested field updates its value.
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const FieldSetComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Callback triggered when a button component is pressed.
+  final OnButtonPressed? onPressed;
+
+  const FieldSetComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.onPressed,
+  }) : super(key: key);
 
   /// List of child components inside the fieldset.
   List<ComponentModel> get _children {
@@ -40,15 +49,25 @@ class FieldSetComponent extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 12),
       padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(border: Border.all(color: Colors.grey.shade400), borderRadius: BorderRadius.circular(6)),
+      decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey.shade400),
+          borderRadius: BorderRadius.circular(6)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (_legend.isNotEmpty) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(_legend, style: Theme.of(context).textTheme.labelLarge)),
+          if (_legend.isNotEmpty)
+            Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Text(_legend,
+                    style: Theme.of(context).textTheme.labelLarge)),
           ..._children.map(
             (child) => Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
-              child: ComponentFactory.build(component: child, value: value[child.key], onChanged: (val) => _updateChild(child.key, val)),
+              child: ComponentFactory.build(
+                  component: child,
+                  value: value[child.key],
+                  onPressed: onPressed,
+                  onChanged: (val) => _updateChild(child.key, val)),
             ),
           ),
         ],

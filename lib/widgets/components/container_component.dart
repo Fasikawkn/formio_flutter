@@ -19,12 +19,16 @@ class ContainerComponent extends StatelessWidget {
   /// Callback triggered when any child component changes its value.
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const ContainerComponent(
-      {Key? key,
-      required this.component,
-      required this.value,
-      required this.onChanged})
-      : super(key: key);
+  /// Callback triggered when a button component is pressed.
+  final OnButtonPressed? onPressed;
+
+  const ContainerComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.onPressed,
+  }) : super(key: key);
 
   /// List of child components inside the container.
   List<ComponentModel> get _children {
@@ -57,6 +61,7 @@ class ContainerComponent extends StatelessWidget {
             child: ComponentFactory.build(
                 component: child,
                 value: value[child.key],
+                onPressed: onPressed,
                 onChanged: (val) => _updateField(child.key, val)),
           ),
         ),

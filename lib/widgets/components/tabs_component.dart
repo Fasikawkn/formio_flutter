@@ -19,12 +19,16 @@ class TabsComponent extends StatefulWidget {
   /// Callback triggered when any child component's value changes.
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const TabsComponent(
-      {Key? key,
-      required this.component,
-      required this.value,
-      required this.onChanged})
-      : super(key: key);
+  /// Callback triggered when a button component is pressed.
+  final OnButtonPressed? onPressed;
+
+  const TabsComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.onPressed,
+  }) : super(key: key);
 
   @override
   State<TabsComponent> createState() => _TabsComponentState();
@@ -140,6 +144,7 @@ class _TabsComponentState extends State<TabsComponent>
                           child: ComponentFactory.build(
                               component: comp,
                               value: widget.value[comp.key],
+                              onPressed: widget.onPressed,
                               onChanged: (val) => _updateField(comp.key, val)),
                         ),
                       )

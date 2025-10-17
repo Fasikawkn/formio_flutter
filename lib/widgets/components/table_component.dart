@@ -19,12 +19,16 @@ class TableComponent extends StatelessWidget {
   /// Callback triggered when any child component's value changes.
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const TableComponent(
-      {Key? key,
-      required this.component,
-      required this.value,
-      required this.onChanged})
-      : super(key: key);
+  /// Callback triggered when a button component is pressed.
+  final OnButtonPressed? onPressed;
+
+  const TableComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.onPressed,
+  }) : super(key: key);
 
   /// Returns a list of rows, where each row is a list of components.
   // List<List<ComponentModel>> get _rows {
@@ -46,6 +50,7 @@ class TableComponent extends StatelessWidget {
       child: ComponentFactory.build(
         component: component,
         value: value[component.key],
+        onPressed: onPressed,
         onChanged: (val) {
           final updated = Map<String, dynamic>.from(value);
           updated[component.key] = val;

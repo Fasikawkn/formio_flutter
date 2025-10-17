@@ -15,15 +15,23 @@ class ButtonComponent extends StatelessWidget {
   final ComponentModel component;
 
   /// Called when the button is tapped.
-  final VoidCallback onPressed;
+  final Function(String action) onPressed;
 
   /// Whether the button is currently disabled.
   final bool isDisabled;
 
-  const ButtonComponent({Key? key, required this.component, required this.onPressed, this.isDisabled = false}) : super(key: key);
+  const ButtonComponent(
+      {Key? key,
+      required this.component,
+      required this.onPressed,
+      this.isDisabled = false})
+      : super(key: key);
 
   /// Extracts the button label from the component definition.
-  String get _label => component.label.isNotEmpty ? component.label : (component.raw['label'] ?? 'Submit').toString();
+  String get _label => component.label.isNotEmpty
+      ? component.label
+      : (component.raw['label'] ?? 'Submit').toString();
+  String get action => component.raw['action'] ?? 'submit';
 
   /// Determines the action type of the button.
   // ButtonAction get _action {
@@ -43,23 +51,40 @@ class ButtonComponent extends StatelessWidget {
   /// Chooses a button style based on the theme specified in the component.
   ButtonStyle _style(BuildContext context) {
     final theme = (component.raw['theme'] ?? 'primary').toString();
-    final color = switch (theme) {
-      'primary' => Theme.of(context).colorScheme.primary,
-      'danger' => Theme.of(context).colorScheme.error,
-      'info' => Colors.teal,
-      'success' => Colors.green,
-      'warning' => Colors.orange,
-      _ => Theme.of(context).colorScheme.primary,
-    };
+    switch (theme) {
+      case 'primary':
+        // Using primary color
+        break;
+      case 'danger':
+        // Using error color
+        break;
+      case 'info':
+        // Using teal color
+        break;
+      case 'success':
+        // Using green color
+        break;
+      case 'warning':
+        // Using orange color
+        break;
+      default:
+        // Default to primary
+        break;
+    }
 
-    return ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white, textStyle: const TextStyle(fontWeight: FontWeight.bold));
+    return ElevatedButton.styleFrom(
+        backgroundColor: Colors.red,
+        foregroundColor: Colors.white,
+        textStyle: const TextStyle(fontWeight: FontWeight.bold));
   }
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
-
-      child: ElevatedButton(style: _style(context), onPressed: isDisabled ? null : onPressed, child: Text(_label)));
+        width: double.infinity,
+        child: ElevatedButton(
+            style: _style(context),
+            onPressed: isDisabled ? null : () => onPressed(action),
+            child: Text(_label)));
   }
 }

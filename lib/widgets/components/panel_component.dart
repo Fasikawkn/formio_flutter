@@ -13,13 +13,22 @@ class PanelComponent extends StatelessWidget {
   /// The Form.io panel definition.
   final ComponentModel component;
 
-  /// Nested values passed into the panel’s child components.
+  /// Nested values passed into the panel's child components.
   final Map<String, dynamic> value;
 
   /// Callback triggered when any child component inside the panel changes.
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const PanelComponent({Key? key, required this.component, required this.value, required this.onChanged}) : super(key: key);
+  /// Callback triggered when a button component is pressed.
+  final OnButtonPressed? onPressed;
+
+  const PanelComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.onPressed,
+  }) : super(key: key);
 
   /// List of components inside the panel.
   List<ComponentModel> get _children {
@@ -27,16 +36,7 @@ class PanelComponent extends StatelessWidget {
     return components.map((c) => ComponentModel.fromJson(c)).toList();
   }
 
-  /// Optional description shown below the title.
-  String? get _description => component.raw['description'];
-
   /// Updates the form value for a child component inside the panel.
-  void _updateChild(String key, dynamic fieldValue) {
-    final updated = Map<String, dynamic>.from(value);
-    updated[key] = fieldValue;
-    onChanged(updated);
-  }
-
   void _updateField(String key, dynamic val) {
     final updated = Map<String, dynamic>.from(value);
     updated[key] = val;
@@ -45,8 +45,6 @@ class PanelComponent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = component.label;
-
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -64,7 +62,8 @@ class PanelComponent extends StatelessWidget {
             final expectedValue = condition['eq'];
             final actualValue = value[controllingKey];
 
-            final matches = actualValue?.toString() == expectedValue?.toString();
+            final matches =
+                actualValue?.toString() == expectedValue?.toString();
             final shouldShow = condition['show'] == 'true' ? matches : !matches;
 
             return shouldShow;
@@ -74,6 +73,7 @@ class PanelComponent extends StatelessWidget {
               child: ComponentFactory.build(
                 component: child,
                 value: value[child.key],
+                onPressed: onPressed,
                 onChanged: (val) => _updateField(child.key, val),
               ),
             );

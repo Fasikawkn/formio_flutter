@@ -20,12 +20,16 @@ class DataGridComponent extends StatefulWidget {
   /// Callback triggered when the grid content changes.
   final ValueChanged<List<Map<String, dynamic>>> onChanged;
 
-  const DataGridComponent(
-      {Key? key,
-      required this.component,
-      required this.value,
-      required this.onChanged})
-      : super(key: key);
+  /// Callback triggered when a button component is pressed.
+  final OnButtonPressed? onPressed;
+
+  const DataGridComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.onPressed,
+  }) : super(key: key);
 
   @override
   State<DataGridComponent> createState() => _DataGridComponentState();
@@ -101,6 +105,7 @@ class _DataGridComponentState extends State<DataGridComponent> {
                         child: ComponentFactory.build(
                             component: col,
                             value: row[col.key],
+                            onPressed: widget.onPressed,
                             onChanged: (val) =>
                                 _updateCell(index, col.key, val)),
                       ),

@@ -9,14 +9,14 @@
 
 import 'package:flutter/material.dart';
 
-import '../core/exceptions.dart';
 import '../models/component.dart';
 import '../models/file_data.dart';
 import '../models/form.dart';
 import 'component_factory.dart';
 
 typedef OnFormChanged = void Function(Map<String, dynamic> data);
-typedef OnFormSubmitted = void Function(Map<String, dynamic> data);
+typedef OnFormSubmitted = void Function(
+    Map<String, dynamic> data, bool isValid);
 typedef OnFormSubmitFailed = void Function(String error);
 typedef OnAttachmentsChanged = void Function(
     Map<String, List<FileData>> attachments);
@@ -32,6 +32,7 @@ class FormRenderer extends StatefulWidget {
   final OnFormSubmitFailed? onError;
   final Map<String, dynamic>? initialData;
   final bool isSubmitting;
+  final String? buttonText;
 
   /// Callback when attachments change (separate from form data)
   final OnAttachmentsChanged? onAttachmentsChanged;
@@ -45,6 +46,7 @@ class FormRenderer extends StatefulWidget {
     this.initialData,
     this.isSubmitting = false,
     this.onAttachmentsChanged,
+    this.buttonText,
   }) : super(key: key);
 
   @override
@@ -101,18 +103,7 @@ class _FormRendererState extends State<FormRenderer> {
 
   Future<void> _handleSubmit() async {
     final isValid = _validateForm();
-    if (!isValid) return;
-
-    setState(() => _isSubmitting = true);
-
-    try {
-      widget.onSubmit?.call(_formData);
-    } catch (e) {
-      final error = e is ApiException ? e.message : 'Unknown error';
-      widget.onError?.call(error);
-    } finally {
-      setState(() => _isSubmitting = false);
-    }
+    widget.onSubmit?.call(_formData, isValid);
   }
 
   /// Checks whether a component should be shown based on its conditional logic.
@@ -158,6 +149,16 @@ class _FormRendererState extends State<FormRenderer> {
       },
       onFileChanged: (key, files) {
         _updateAttachment(key, files);
+      },
+      onPressed: (action) {
+        if (action == 'submit') {
+          _handleSubmit();
+        } else if (action == 'reset') {
+          setState(() {
+            _formData.clear();
+            _attachments.clear();
+          });
+        }
       },
       fieldNumber: fieldNumber,
     );
@@ -212,48 +213,56 @@ class _FormRendererState extends State<FormRenderer> {
           margin: const EdgeInsets.symmetric(vertical: 20, horizontal: 10),
           width: double.infinity,
           child: ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).primaryColor,
-              foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(52),
-              elevation: 0,
-              shadowColor: Colors.transparent,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-            ).copyWith(
-              backgroundColor: WidgetStateProperty.resolveWith<Color>(
-                (Set<WidgetState> states) {
-                  if (states.contains(WidgetState.pressed)) {
-                    return Theme.of(context)
-                        .primaryColor
-                        .withValues(alpha: 0.8);
-                  }
-                  if (states.contains(WidgetState.disabled)) {
-                    return Theme.of(context).disabledColor;
-                  }
-                  return Theme.of(context).primaryColor;
-                },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).primaryColor,
+                foregroundColor: Colors.white,
+                minimumSize: const Size.fromHeight(52),
+                elevation: 0,
+                shadowColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              ).copyWith(
+                backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                  (Set<WidgetState> states) {
+                    if (states.contains(WidgetState.pressed)) {
+                      return Theme.of(context)
+                          .primaryColor
+                          .withValues(alpha: 0.8);
+                    }
+                    if (states.contains(WidgetState.disabled)) {
+                      return Theme.of(context).disabledColor;
+                    }
+                    return Theme.of(context).primaryColor;
+                  },
+                ),
               ),
-            ),
-            onPressed: _isSubmitting ? null : _handleSubmit,
-            child: _isSubmitting
-                ? SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              onPressed: _isSubmitting ? null : _handleSubmit,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  if (_isSubmitting) ...[
+                    SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
                     ),
-                  )
-                : Text(
-                    'Submit Form',
+                    const SizedBox(width: 16),
+                  ],
+                  Text(
+                    widget.buttonText ?? 'Submit Form',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-          ),
+                ],
+              )),
         )
       ],
     );

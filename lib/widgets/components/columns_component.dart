@@ -19,12 +19,16 @@ class ColumnsComponent extends StatelessWidget {
   /// Callback triggered when any nested component in any column updates its value.
   final ValueChanged<Map<String, dynamic>> onChanged;
 
-  const ColumnsComponent(
-      {Key? key,
-      required this.component,
-      required this.value,
-      required this.onChanged})
-      : super(key: key);
+  /// Callback triggered when a button component is pressed.
+  final OnButtonPressed? onPressed;
+
+  const ColumnsComponent({
+    Key? key,
+    required this.component,
+    required this.value,
+    required this.onChanged,
+    this.onPressed,
+  }) : super(key: key);
 
   /// Parses the column layout structure from the raw JSON.
   List<List<ComponentModel>> get _columns {
@@ -72,6 +76,7 @@ class ColumnsComponent extends StatelessWidget {
                             child: ComponentFactory.build(
                                 component: comp,
                                 value: value[comp.key],
+                                onPressed: onPressed,
                                 onChanged: (val) =>
                                     _updateField(comp.key, val)),
                           ),
