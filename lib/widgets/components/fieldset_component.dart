@@ -21,12 +21,16 @@ class FieldSetComponent extends StatelessWidget {
   /// Callback triggered when a button component is pressed.
   final OnButtonPressed? onPressed;
 
+  /// Optional: Full form data for evaluating conditionals
+  final Map<String, dynamic>? formData;
+
   const FieldSetComponent({
     Key? key,
     required this.component,
     required this.value,
     required this.onChanged,
     this.onPressed,
+    this.formData,
   }) : super(key: key);
 
   /// List of child components inside the fieldset.
@@ -60,16 +64,22 @@ class FieldSetComponent extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(_legend,
                     style: Theme.of(context).textTheme.labelLarge)),
-          ..._children.map(
-            (child) => Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: ComponentFactory.build(
-                  component: child,
-                  value: value[child.key],
-                  onPressed: onPressed,
-                  onChanged: (val) => _updateChild(child.key, val)),
-            ),
-          ),
+          ..._children
+              .where((child) => ComponentFactory.shouldShowComponent(
+                    child,
+                    formData ?? value,
+                  ))
+              .map(
+                (child) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: ComponentFactory.build(
+                      component: child,
+                      value: value[child.key],
+                      onPressed: onPressed,
+                      formData: formData,
+                      onChanged: (val) => _updateChild(child.key, val)),
+                ),
+              ),
         ],
       ),
     );

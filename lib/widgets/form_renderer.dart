@@ -81,8 +81,203 @@ class _FormRendererState extends State<FormRenderer> {
   void _updateField(String key, dynamic value) {
     setState(() {
       _formData[key] = value;
+      // Clean up values for hidden fields
+      _cleanupHiddenFields();
     });
     widget.onChanged?.call(_formData);
+  }
+
+  /// Removes values for components that are currently hidden
+  void _cleanupHiddenFields() {
+    void checkComponents(
+      List<ComponentModel> components, {
+      bool parentVisible = true,
+      String? parentKey,
+    }) {
+      for (final component in components) {
+        final isComponentVisible = _shouldShowComponent(component);
+        final effectivelyVisible = parentVisible && isComponentVisible;
+
+        if (!effectivelyVisible) {
+          // Component is hidden, remove its value
+          if (parentKey != null) {
+            // Remove from nested parent map
+            if (_formData[parentKey] is Map<String, dynamic>) {
+              (_formData[parentKey] as Map<String, dynamic>)
+                  .remove(component.key);
+            }
+          } else {
+            // Remove from root form data
+            _formData.remove(component.key);
+          }
+          _attachments.remove(component.key);
+
+          // Also clean nested components if this component has any
+          _cleanNestedComponents(component, parentKey: component.key);
+        } else {
+          // Component is visible, check its nested components
+          _checkVisibleNestedComponents(component, effectivelyVisible);
+        }
+      }
+    }
+
+    checkComponents(widget.form.components);
+  }
+
+  /// Cleans all nested components when parent is hidden
+  void _cleanNestedComponents(ComponentModel component, {String? parentKey}) {
+    if (component.type == 'panel' ||
+        component.type == 'fieldset' ||
+        component.type == 'container') {
+      final nestedComponents = component.raw['components'] as List? ?? [];
+      for (final nested in nestedComponents) {
+        final nestedComponent = ComponentModel.fromJson(nested);
+        if (parentKey != null && _formData[parentKey] is Map<String, dynamic>) {
+          (_formData[parentKey] as Map<String, dynamic>)
+              .remove(nestedComponent.key);
+        }
+        _attachments.remove(nestedComponent.key);
+        _cleanNestedComponents(nestedComponent, parentKey: parentKey);
+      }
+    } else if (component.type == 'columns') {
+      final columns = component.raw['columns'] as List? ?? [];
+      for (final column in columns) {
+        final columnComponents = column['components'] as List? ?? [];
+        for (final comp in columnComponents) {
+          final columnComponent = ComponentModel.fromJson(comp);
+          if (parentKey != null &&
+              _formData[parentKey] is Map<String, dynamic>) {
+            (_formData[parentKey] as Map<String, dynamic>)
+                .remove(columnComponent.key);
+          }
+          _attachments.remove(columnComponent.key);
+          _cleanNestedComponents(columnComponent, parentKey: parentKey);
+        }
+      }
+    } else if (component.type == 'tabs') {
+      final tabs = component.raw['components'] as List? ?? [];
+      for (final tab in tabs) {
+        final tabComponents = tab['components'] as List? ?? [];
+        for (final comp in tabComponents) {
+          final tabComponent = ComponentModel.fromJson(comp);
+          if (parentKey != null &&
+              _formData[parentKey] is Map<String, dynamic>) {
+            (_formData[parentKey] as Map<String, dynamic>)
+                .remove(tabComponent.key);
+          }
+          _attachments.remove(tabComponent.key);
+          _cleanNestedComponents(tabComponent, parentKey: parentKey);
+        }
+      }
+    } else if (component.type == 'table') {
+      final rows = component.raw['rows'] as List? ?? [];
+      for (final row in rows) {
+        final cells = row as List<dynamic>;
+        for (final cell in cells) {
+          final cellComponents = cell['components'] as List? ?? [];
+          for (final comp in cellComponents) {
+            final cellComponent = ComponentModel.fromJson(comp);
+            if (parentKey != null &&
+                _formData[parentKey] is Map<String, dynamic>) {
+              (_formData[parentKey] as Map<String, dynamic>)
+                  .remove(cellComponent.key);
+            }
+            _attachments.remove(cellComponent.key);
+            _cleanNestedComponents(cellComponent, parentKey: parentKey);
+          }
+        }
+      }
+    }
+  }
+
+  /// Checks nested components when parent is visible
+  void _checkVisibleNestedComponents(
+      ComponentModel component, bool parentVisible) {
+    if (component.type == 'panel' ||
+        component.type == 'fieldset' ||
+        component.type == 'container') {
+      final nestedComponents = component.raw['components'] as List? ?? [];
+      for (final nested in nestedComponents) {
+        final nestedComponent = ComponentModel.fromJson(nested);
+        final isVisible = _shouldShowComponent(nestedComponent);
+
+        if (!isVisible) {
+          // Remove from parent's nested map
+          if (_formData[component.key] is Map<String, dynamic>) {
+            (_formData[component.key] as Map<String, dynamic>)
+                .remove(nestedComponent.key);
+          }
+          _attachments.remove(nestedComponent.key);
+          _cleanNestedComponents(nestedComponent, parentKey: component.key);
+        } else {
+          _checkVisibleNestedComponents(nestedComponent, isVisible);
+        }
+      }
+    } else if (component.type == 'columns') {
+      final columns = component.raw['columns'] as List? ?? [];
+      for (final column in columns) {
+        final columnComponents = column['components'] as List? ?? [];
+        for (final comp in columnComponents) {
+          final columnComponent = ComponentModel.fromJson(comp);
+          final isVisible = _shouldShowComponent(columnComponent);
+
+          if (!isVisible) {
+            // Remove from columns' nested map
+            if (_formData[component.key] is Map<String, dynamic>) {
+              (_formData[component.key] as Map<String, dynamic>)
+                  .remove(columnComponent.key);
+            }
+            _attachments.remove(columnComponent.key);
+            _cleanNestedComponents(columnComponent, parentKey: component.key);
+          } else {
+            _checkVisibleNestedComponents(columnComponent, isVisible);
+          }
+        }
+      }
+    } else if (component.type == 'tabs') {
+      final tabs = component.raw['components'] as List? ?? [];
+      for (final tab in tabs) {
+        final tabComponents = tab['components'] as List? ?? [];
+        for (final comp in tabComponents) {
+          final tabComponent = ComponentModel.fromJson(comp);
+          final isVisible = _shouldShowComponent(tabComponent);
+
+          if (!isVisible) {
+            if (_formData[component.key] is Map<String, dynamic>) {
+              (_formData[component.key] as Map<String, dynamic>)
+                  .remove(tabComponent.key);
+            }
+            _attachments.remove(tabComponent.key);
+            _cleanNestedComponents(tabComponent, parentKey: component.key);
+          } else {
+            _checkVisibleNestedComponents(tabComponent, isVisible);
+          }
+        }
+      }
+    } else if (component.type == 'table') {
+      final rows = component.raw['rows'] as List? ?? [];
+      for (final row in rows) {
+        final cells = row as List<dynamic>;
+        for (final cell in cells) {
+          final cellComponents = cell['components'] as List? ?? [];
+          for (final comp in cellComponents) {
+            final cellComponent = ComponentModel.fromJson(comp);
+            final isVisible = _shouldShowComponent(cellComponent);
+
+            if (!isVisible) {
+              if (_formData[component.key] is Map<String, dynamic>) {
+                (_formData[component.key] as Map<String, dynamic>)
+                    .remove(cellComponent.key);
+              }
+              _attachments.remove(cellComponent.key);
+              _cleanNestedComponents(cellComponent, parentKey: component.key);
+            } else {
+              _checkVisibleNestedComponents(cellComponent, isVisible);
+            }
+          }
+        }
+      }
+    }
   }
 
   void _updateAttachment(String key, List<FileData> files) {
@@ -118,7 +313,16 @@ class _FormRendererState extends State<FormRenderer> {
     if (when == null || when.toString().isEmpty) return true;
 
     final value = _formData[when];
-    final matches = value?.toString() == eq?.toString();
+
+    // Handle selectboxes value format (Map<String, bool>)
+    bool matches;
+    if (value is Map) {
+      // For selectboxes, check if the specific option is selected
+      matches = value[eq] == true;
+    } else {
+      // For other component types, compare values directly
+      matches = value?.toString() == eq?.toString();
+    }
 
     // Default behavior is to show if matched
     final shouldShow = (show == true || show == 'true') ? matches : !matches;
@@ -144,6 +348,7 @@ class _FormRendererState extends State<FormRenderer> {
       value: component.type == 'file'
           ? _attachments[component.key] ?? []
           : _formData[component.key],
+      formData: _formData,
       onChanged: (value) {
         _updateField(component.key, value);
       },

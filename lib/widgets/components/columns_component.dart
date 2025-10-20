@@ -22,12 +22,16 @@ class ColumnsComponent extends StatelessWidget {
   /// Callback triggered when a button component is pressed.
   final OnButtonPressed? onPressed;
 
+  /// Optional: Full form data for evaluating conditionals
+  final Map<String, dynamic>? formData;
+
   const ColumnsComponent({
     Key? key,
     required this.component,
     required this.value,
     required this.onChanged,
     this.onPressed,
+    this.formData,
   }) : super(key: key);
 
   /// Parses the column layout structure from the raw JSON.
@@ -69,6 +73,10 @@ class ColumnsComponent extends StatelessWidget {
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: colComponents
+                        .where((comp) => ComponentFactory.shouldShowComponent(
+                              comp,
+                              formData ?? value,
+                            ))
                         .map(
                           (comp) => Padding(
                             padding:
@@ -77,6 +85,7 @@ class ColumnsComponent extends StatelessWidget {
                                 component: comp,
                                 value: value[comp.key],
                                 onPressed: onPressed,
+                                formData: formData,
                                 onChanged: (val) =>
                                     _updateField(comp.key, val)),
                           ),

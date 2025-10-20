@@ -22,12 +22,16 @@ class PanelComponent extends StatelessWidget {
   /// Callback triggered when a button component is pressed.
   final OnButtonPressed? onPressed;
 
+  /// Optional: Full form data for evaluating conditionals
+  final Map<String, dynamic>? formData;
+
   const PanelComponent({
     Key? key,
     required this.component,
     required this.value,
     required this.onChanged,
     this.onPressed,
+    this.formData,
   }) : super(key: key);
 
   /// List of components inside the panel.
@@ -53,27 +57,19 @@ class PanelComponent extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: _children.where((child) {
-            // Optional pre-check for conditional inside child
-            final condition = child.conditional;
-            if (condition == null || condition['when'] == null) return true;
-
-            final controllingKey = condition['when'];
-            final expectedValue = condition['eq'];
-            final actualValue = value[controllingKey];
-
-            final matches =
-                actualValue?.toString() == expectedValue?.toString();
-            final shouldShow = condition['show'] == 'true' ? matches : !matches;
-
-            return shouldShow;
-          }).map((child) {
+          children: _children
+              .where((child) => ComponentFactory.shouldShowComponent(
+                    child,
+                    formData ?? value,
+                  ))
+              .map((child) {
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 6),
               child: ComponentFactory.build(
                 component: child,
                 value: value[child.key],
                 onPressed: onPressed,
+                formData: formData,
                 onChanged: (val) => _updateField(child.key, val),
               ),
             );

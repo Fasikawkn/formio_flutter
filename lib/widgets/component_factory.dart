@@ -53,6 +53,43 @@ typedef OnFileChanged = void Function(String key, List<FileData> files);
 typedef OnButtonPressed = void Function(String action);
 
 class ComponentFactory {
+  /// Evaluates whether a component should be shown based on its conditional logic.
+  ///
+  /// [component] - The component to check
+  /// [formData] - The complete form data map containing all field values
+  ///
+  /// Returns true if the component should be shown, false otherwise.
+  static bool shouldShowComponent(
+    ComponentModel component,
+    Map<String, dynamic> formData,
+  ) {
+    final condition = component.conditional;
+    if (condition == null) return true;
+
+    final when = condition['when'];
+    final eq = condition['eq'];
+    final show = condition['show'];
+
+    if (when == null || when.toString().isEmpty) return true;
+
+    final value = formData[when];
+
+    // Handle selectboxes value format (Map<String, bool>)
+    bool matches;
+    if (value is Map) {
+      // For selectboxes, check if the specific option is selected
+      matches = value[eq] == true;
+    } else {
+      // For other component types, compare values directly
+      matches = value?.toString() == eq?.toString();
+    }
+
+    // Default behavior is to show if matched
+    final shouldShow = (show == true || show == 'true') ? matches : !matches;
+
+    return shouldShow;
+  }
+
   /// Creates the appropriate widget for a given component.
   static Widget build({
     required ComponentModel component,
@@ -61,18 +98,10 @@ class ComponentFactory {
     OnFileChanged? onFileChanged,
     OnButtonPressed? onPressed,
     int? fieldNumber,
+    Map<String, dynamic>? formData,
   }) {
-    if (component.conditional != null) {
-      final when = component.conditional?['when'];
-      final eq = component.conditional?['eq'];
-      final show = component.conditional?['show'] == 'true';
-      final currentValue = value is Map<String, dynamic> ? value[when] : null;
-      final matches = currentValue?.toString() == eq?.toString();
-      final shouldShow = show ? matches : !matches;
-      if (!shouldShow) {
-        return const SizedBox.shrink();
-      }
-    }
+    // Note: Conditional logic is handled in FormRenderer, not here
+    // The 'value' parameter here is the component's own value, not form data
 
     switch (component.type) {
       // Basic
@@ -164,7 +193,8 @@ class ComponentFactory {
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged,
-            onPressed: onPressed);
+            onPressed: onPressed,
+            formData: formData);
       // case 'datamap':
       //   return DataMapComponent(
       //       component: component,
@@ -188,13 +218,15 @@ class ComponentFactory {
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged,
-            onPressed: onPressed);
+            onPressed: onPressed,
+            formData: formData);
       case 'columns':
         return ColumnsComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged,
-            onPressed: onPressed);
+            onPressed: onPressed,
+            formData: formData);
       // case 'htmlelement':
       //   return HtmlElementComponent(component: component);
       // case 'content':
@@ -204,19 +236,22 @@ class ComponentFactory {
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged,
-            onPressed: onPressed);
+            onPressed: onPressed,
+            formData: formData);
       case 'table':
         return TableComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged,
-            onPressed: onPressed);
+            onPressed: onPressed,
+            formData: formData);
       case 'tabs':
         return TabsComponent(
             component: component,
             value: value is Map<String, dynamic> ? value : {},
             onChanged: onChanged,
-            onPressed: onPressed);
+            onPressed: onPressed,
+            formData: formData);
       // case 'well':
       //   return WellComponent(
       //       component: component,

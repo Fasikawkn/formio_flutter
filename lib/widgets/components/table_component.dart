@@ -22,12 +22,16 @@ class TableComponent extends StatelessWidget {
   /// Callback triggered when a button component is pressed.
   final OnButtonPressed? onPressed;
 
+  /// Optional: Full form data for evaluating conditionals
+  final Map<String, dynamic>? formData;
+
   const TableComponent({
     Key? key,
     required this.component,
     required this.value,
     required this.onChanged,
     this.onPressed,
+    this.formData,
   }) : super(key: key);
 
   /// Returns a list of rows, where each row is a list of components.
@@ -51,6 +55,7 @@ class TableComponent extends StatelessWidget {
         component: component,
         value: value[component.key],
         onPressed: onPressed,
+        formData: formData,
         onChanged: (val) {
           final updated = Map<String, dynamic>.from(value);
           updated[component.key] = val;
@@ -85,6 +90,10 @@ class TableComponent extends StatelessWidget {
                       children: components
                           .map<ComponentModel>(
                               (json) => ComponentModel.fromJson(json))
+                          .where((comp) => ComponentFactory.shouldShowComponent(
+                                comp,
+                                formData ?? value,
+                              ))
                           .map(_buildCell)
                           .toList());
                 }).toList(),

@@ -22,12 +22,16 @@ class TabsComponent extends StatefulWidget {
   /// Callback triggered when a button component is pressed.
   final OnButtonPressed? onPressed;
 
+  /// Optional: Full form data for evaluating conditionals
+  final Map<String, dynamic>? formData;
+
   const TabsComponent({
     Key? key,
     required this.component,
     required this.value,
     required this.onChanged,
     this.onPressed,
+    this.formData,
   }) : super(key: key);
 
   @override
@@ -138,6 +142,10 @@ class _TabsComponentState extends State<TabsComponent>
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: components
+                      .where((comp) => ComponentFactory.shouldShowComponent(
+                            comp,
+                            widget.formData ?? widget.value,
+                          ))
                       .map(
                         (comp) => Padding(
                           padding: const EdgeInsets.only(bottom: 16),
@@ -145,6 +153,7 @@ class _TabsComponentState extends State<TabsComponent>
                               component: comp,
                               value: widget.value[comp.key],
                               onPressed: widget.onPressed,
+                              formData: widget.formData,
                               onChanged: (val) => _updateField(comp.key, val)),
                         ),
                       )

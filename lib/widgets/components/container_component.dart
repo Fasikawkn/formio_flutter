@@ -22,12 +22,16 @@ class ContainerComponent extends StatelessWidget {
   /// Callback triggered when a button component is pressed.
   final OnButtonPressed? onPressed;
 
+  /// Optional: Full form data for evaluating conditionals
+  final Map<String, dynamic>? formData;
+
   const ContainerComponent({
     Key? key,
     required this.component,
     required this.value,
     required this.onChanged,
     this.onPressed,
+    this.formData,
   }) : super(key: key);
 
   /// List of child components inside the container.
@@ -55,16 +59,22 @@ class ContainerComponent extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Text(component.label,
                   style: Theme.of(context).textTheme.bodyMedium)),
-        ..._children.map(
-          (child) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: ComponentFactory.build(
-                component: child,
-                value: value[child.key],
-                onPressed: onPressed,
-                onChanged: (val) => _updateField(child.key, val)),
-          ),
-        ),
+        ..._children
+            .where((child) => ComponentFactory.shouldShowComponent(
+                  child,
+                  formData ?? value,
+                ))
+            .map(
+              (child) => Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6),
+                child: ComponentFactory.build(
+                    component: child,
+                    value: value[child.key],
+                    onPressed: onPressed,
+                    formData: formData,
+                    onChanged: (val) => _updateField(child.key, val)),
+              ),
+            ),
       ],
     );
   }
