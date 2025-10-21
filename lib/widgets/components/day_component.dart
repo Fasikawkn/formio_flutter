@@ -121,19 +121,44 @@ class _DayComponentState extends State<DayComponent> {
             Row(
               children: [
                 // Day
-                Flexible(
+                Expanded(
+                  flex: 2,
                   child: DropdownButtonFormField<int>(
                     value: _day,
-                    alignment: Alignment.center,
-                    icon: SizedBox.shrink(),
+                    isExpanded: true,
+                    icon: const SizedBox.shrink(),
                     style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
-                    decoration: InputDecorationUtils.createDropdownDecoration(
+                    decoration: InputDecorationUtils.createDecoration(
                       context,
                       hintText: 'Day',
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ).copyWith(
+                      hintMaxLines: 1,
                     ),
+                    selectedItemBuilder: (context) {
+                      return List.generate(31, (i) => i + 1).map((d) {
+                        return Center(
+                          child: Text(
+                            d.toString(),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                          ),
+                        );
+                      }).toList();
+                    },
                     items: List.generate(31, (i) => i + 1)
                         .map((d) => DropdownMenuItem(
-                            value: d, child: Text(d.toString())))
+                            value: d,
+                            child: Text(
+                              d.toString(),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            )))
                         .toList(),
                     onChanged: (val) {
                       setState(() => _day = val);
@@ -145,19 +170,29 @@ class _DayComponentState extends State<DayComponent> {
                 const SizedBox(width: 8),
 
                 // Month
-                Flexible(
+                Expanded(
+                  flex: 2,
                   child: DropdownButtonFormField<int>(
                     value: _month,
-                    alignment: Alignment.center,
-                    icon: SizedBox.shrink(),
-                    style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
-                    decoration: InputDecorationUtils.createDropdownDecoration(
+                    isExpanded: true,
+                    isDense: true,
+                    icon: const SizedBox.shrink(),
+                    style: InputDecorationUtils.getDropdownStyle(
+                      fontSize: 14,
+                      
+                    ),
+                    decoration: InputDecorationUtils.createDecoration(
                       context,
                       hintText: 'Month',
                     ),
                     items: List.generate(12, (i) => i + 1)
                         .map((m) => DropdownMenuItem(
-                            value: m, child: Text(m.toString())))
+                            value: m,
+                            child: Text(
+                              m.toString(),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            )))
                         .toList(),
                     onChanged: (val) {
                       setState(() => _month = val);
@@ -169,20 +204,34 @@ class _DayComponentState extends State<DayComponent> {
                 const SizedBox(width: 8),
 
                 // Year
-                Flexible(
+                Expanded(
+                  flex: 3,
                   child: DropdownButtonFormField<int>(
                     value: _year,
-                    alignment: Alignment.center,
-                    icon: SizedBox.shrink(),
+                    isExpanded: true,
+                    icon: const SizedBox.shrink(),
                     style: InputDecorationUtils.getDropdownStyle(fontSize: 14),
-                    decoration: InputDecorationUtils.createDropdownDecoration(
+                    decoration: InputDecorationUtils.createDecoration(
                       context,
                       hintText: 'Year',
+                      hintStyle: TextStyle(
+                        color: Colors.grey,
+                        fontSize: 14,
+                        fontWeight: FontWeight.normal,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ).copyWith(
+                      hintMaxLines: 1,
                     ),
                     items: List.generate(
                             _endYear - _startYear + 1, (i) => _endYear - i)
                         .map((y) => DropdownMenuItem(
-                            value: y, child: Text(y.toString())))
+                            value: y,
+                            child: Text(
+                              y.toString(),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            )))
                         .toList(),
                     onChanged: (val) {
                       setState(() => _year = val);

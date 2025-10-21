@@ -93,6 +93,7 @@ class InputDecorationUtils {
       color: color ?? Colors.black87,
       fontSize: fontSize,
       fontWeight: fontWeight,
+      overflow: TextOverflow.ellipsis
     );
   }
 }
