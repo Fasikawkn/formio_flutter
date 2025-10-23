@@ -1,6 +1,6 @@
 name: formio
 description: A dynamic form rendering and submission package for Flutter using Form.io schemas.
-version: 0.1.1
+version: 0.1.2
 homepage: https://spinex.io
 repository: https://github.com/mskayali/formio_flutter
 issue_tracker: https://github.com/mskayali/formio_flutter/issues
