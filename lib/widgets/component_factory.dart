@@ -53,6 +53,31 @@ typedef OnFileChanged = void Function(String key, List<FileData> files);
 typedef OnButtonPressed = void Function(String action);
 
 class ComponentFactory {
+  /// Retrieves a value from nested form data by searching recursively.
+  ///
+  /// [formData] - The complete form data map (can be nested)
+  /// [key] - The key to search for
+  ///
+  /// Returns the value if found, null otherwise.
+  static dynamic _getValueFromFormData(Map<String, dynamic> formData, String key) {
+    // First, try direct access
+    if (formData.containsKey(key)) {
+      return formData[key];
+    }
+
+    // If not found, search recursively in nested structures
+    for (final value in formData.values) {
+      if (value is Map<String, dynamic>) {
+        final result = _getValueFromFormData(value, key);
+        if (result != null) {
+          return result;
+        }
+      }
+    }
+
+    return null;
+  }
+
   /// Evaluates whether a component should be shown based on its conditional logic.
   ///
   /// [component] - The component to check
@@ -72,7 +97,8 @@ class ComponentFactory {
 
     if (when == null || when.toString().isEmpty) return true;
 
-    final value = formData[when];
+    // Use the helper method to get the value from nested form data
+    final value = _getValueFromFormData(formData, when);
 
     // Handle selectboxes value format (Map<String, bool>)
     bool matches;
