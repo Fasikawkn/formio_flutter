@@ -35,7 +35,7 @@ export 'services/auth_service.dart';
 export 'services/form_service.dart';
 export 'services/submission_service.dart';
 // UI
-export 'widgets/component_factory.dart';
+export 'widgets/component_factory.dart' hide OnImageSizeError;
 export 'widgets/components/checkbox_component.dart';
 export 'widgets/components/text_field_component.dart';
 // Renderer

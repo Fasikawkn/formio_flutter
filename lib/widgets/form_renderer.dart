@@ -24,6 +24,7 @@ typedef OnFormSubmittedWithAttachments = void Function(
   Map<String, dynamic> data,
   Map<String, List<FileData>> attachments,
 );
+typedef OnImageSizeError = void Function(String fileName, int sizeKB);
 
 class FormRenderer extends StatefulWidget {
   final FormModel form;
@@ -37,6 +38,12 @@ class FormRenderer extends StatefulWidget {
   /// Callback when attachments change (separate from form data)
   final OnAttachmentsChanged? onAttachmentsChanged;
 
+  /// Maximum image size in KB (default: 1024 KB = 1 MB)
+  final int? maxImageSizeKB;
+
+  /// Callback when an image exceeds the size limit after compression
+  final OnImageSizeError? onImageSizeError;
+
   const FormRenderer({
     Key? key,
     required this.form,
@@ -47,6 +54,8 @@ class FormRenderer extends StatefulWidget {
     this.isSubmitting = false,
     this.onAttachmentsChanged,
     this.buttonText,
+    this.maxImageSizeKB,
+    this.onImageSizeError,
   }) : super(key: key);
 
   @override
@@ -366,6 +375,8 @@ class _FormRendererState extends State<FormRenderer> {
         }
       },
       fieldNumber: fieldNumber,
+      maxImageSizeKB: widget.maxImageSizeKB,
+      onImageSizeError: widget.onImageSizeError,
     );
 
     return fieldWidget;

@@ -13,6 +13,7 @@ import 'package:mime/mime.dart';
 
 import '../../models/component.dart';
 import '../../models/file_data.dart';
+import '../../services/image_compression_service.dart';
 import '../shared/field_label.dart';
 
 class FileComponent extends StatelessWidget {
@@ -28,12 +29,20 @@ class FileComponent extends StatelessWidget {
   /// Optional field number to display before the label
   final int? fieldNumber;
 
+  /// Maximum image size in KB
+  final int? maxImageSizeKB;
+
+  /// Callback when an image exceeds the size limit after compression
+  final void Function(String fileName, int sizeKB)? onImageSizeError;
+
   const FileComponent({
     Key? key,
     required this.component,
     required this.value,
     required this.onChanged,
     this.fieldNumber,
+    this.maxImageSizeKB,
+    this.onImageSizeError,
   }) : super(key: key);
 
   /// Whether multiple file selection is allowed.
@@ -73,19 +82,47 @@ class FileComponent extends StatelessWidget {
 
     if (result != null && result.files.isNotEmpty) {
       final List<FileData> fileDataList = [];
+      final compressionService = ImageCompressionService();
 
       for (final file in result.files) {
         if (file.path != null) {
           try {
+            String filePath = file.path!;
+            final mimetype =
+                lookupMimeType(filePath) ?? 'application/octet-stream';
+
+            // Check if file is an image and needs compression
+            final isImage = mimetype.startsWith('image/');
+
+            if (isImage && maxImageSizeKB != null) {
+              // Try to compress the image
+              final compressedPath =
+                  await compressionService.compressImageIfNeeded(
+                filePath,
+                maxFileSizeKB: maxImageSizeKB,
+              );
+
+              if (compressedPath == null) {
+                // Compression failed, image is too large
+                final fileSize = await File(filePath).length();
+                final fileSizeKB = (fileSize / 1024).ceil();
+
+                // Call error callback
+                onImageSizeError?.call(file.name, fileSizeKB);
+
+                // Skip this file
+                continue;
+              }
+
+              // Use compressed image
+              filePath = compressedPath;
+            }
+
             // Read file bytes
-            final fileBytes = await File(file.path!).readAsBytes();
+            final fileBytes = await File(filePath).readAsBytes();
 
             // Convert to base64
             final base64Data = base64Encode(fileBytes);
-
-            // Get mimetype
-            final mimetype =
-                lookupMimeType(file.path!) ?? 'application/octet-stream';
 
             // Create FileData object
             final fileData = FileData(

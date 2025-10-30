@@ -51,6 +51,7 @@ import 'components/time_component.dart';
 typedef OnComponentChanged = void Function(dynamic value);
 typedef OnFileChanged = void Function(String key, List<FileData> files);
 typedef OnButtonPressed = void Function(String action);
+typedef OnImageSizeError = void Function(String fileName, int sizeKB);
 
 class ComponentFactory {
   /// Retrieves a value from nested form data by searching recursively.
@@ -59,7 +60,8 @@ class ComponentFactory {
   /// [key] - The key to search for
   ///
   /// Returns the value if found, null otherwise.
-  static dynamic _getValueFromFormData(Map<String, dynamic> formData, String key) {
+  static dynamic _getValueFromFormData(
+      Map<String, dynamic> formData, String key) {
     // First, try direct access
     if (formData.containsKey(key)) {
       return formData[key];
@@ -125,6 +127,8 @@ class ComponentFactory {
     OnButtonPressed? onPressed,
     int? fieldNumber,
     Map<String, dynamic>? formData,
+    int? maxImageSizeKB,
+    OnImageSizeError? onImageSizeError,
   }) {
     // Note: Conditional logic is handled in FormRenderer, not here
     // The 'value' parameter here is the component's own value, not form data
@@ -298,7 +302,9 @@ class ComponentFactory {
                     : []),
             onChanged: (files) {
               onFileChanged?.call(component.key, files);
-            });
+            },
+            maxImageSizeKB: maxImageSizeKB,
+            onImageSizeError: onImageSizeError);
       // case 'nestedform':
       //   return NestedFormComponent(
       //       component: component,
